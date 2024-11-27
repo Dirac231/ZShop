@@ -857,7 +857,6 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/rservices/rexec_login; set ANONYMOUS_LOGIN true; set USER_AS_PASS true; set BLANK_PASSWORDS true; set PASS_FILE /usr/share/seclists/Passwords/probable-v2-top1575.txt; set RPORT $3; set RHOSTS $2; exploit; exit"
     fi
 
-
     if [[ $1 == "rlogin" ]]; then
         echo -e "\nMSF BRUTEFORCING (PROBABLE V2)\n"
         msfconsole -q -x "use auxiliary/scanner/rservices/rlogin_login; set ANONYMOUS_LOGIN true; set USER_AS_PASS true; set BLANK_PASSWORDS true; set PASS_FILE /usr/share/seclists/Passwords/probable-v2-top1575.txt; set RPORT $3; set RHOSTS $2; exploit; exit"
@@ -1534,11 +1533,12 @@ ptr(){
 
     if [[ $1 =~ $asn_regex ]]; then
         whois -h whois.radb.net -- "-i origin $1" | grep -Eo "([0-9.]+){4}/[0-9]+" | anew -q cidr_$1.txt
-        while read cidr; do echo $cidr | mapcidr -silent | dnsx -ptr -resp-only; done < cidr_$1.txt
-        exit
+        touch ptr_domains.txt && while read cidr; do echo $cidr | mapcidr -silent | dnsx -ptr -resp-only | anew -q ptr_domains.txt; done < cidr_$1.txt
+    elif [[ $1 =~ $cidr_regex ]]; then
+        echo $1 | mapcidr -silent | dnsx -ptr -resp-only | anew -q ptr_domains.txt
+    else
+        cat $1 | dnsx -ptr -resp-only | anew -q ptr_domains.txt
     fi
-
-    echo $1 | mapcidr -silent | dnsx -ptr -resp-only -o ext_ptr.txt
 }
 
 # DNS Resolving function
@@ -1619,8 +1619,8 @@ alive(){
 
 # Shodan Fingerprinting (CIDR / ASN)
 fingerprint_util(){
-    echo -e "\nPASSIVE SHODAN FINGERPRINT\n"
-    cat $1 | nrich -
+    echo -e "\nPASSIVE SHODAN FINGERPRINT \n"
+    cat $1 | nrich - | grep CPE -B 3
 }
 
 shodscan(){
