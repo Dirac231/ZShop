@@ -583,8 +583,9 @@ scan(){
 
         read snmp_ver\?"INPUT SNMP VERSION (1, 2c, 3): "
         if [[ $snmp_ver == "3" ]]; then
-            echo -e "\nPERFORMING USER BRUTEFORCING (XATO / PROBABLE-V2)\n"
-            ~/TOOLS/snmpwn/snmpwn.rb -u /usr/share/seclists/Usernames/xato_top_1000_custom.txt -p /usr/share/seclists/Passwords/probable-v2-top1575.txt --enclist /usr/share/seclists/Passwords/probable-v2-top1575.txt -h $2:$3
+            echo -e "\nPERFORMING USER BRUTEFORCING (XATO-TOP-1000 / PROBABLE-V2)\n"
+            echo "$2:$3" > /tmp/$2_host.txt
+            cur=$(pwd) && cd ~/TOOLS/snmpwn && ./snmpwn.rb -u /usr/share/seclists/Usernames/xato_top_1000_custom.txt -p /usr/share/seclists/Passwords/probable-v2-top1575.txt --enclist /usr/share/seclists/Passwords/probable-v2-top1575.txt -h /tmp/$2_host.txt && cd $cur
 
             echo ""; read snmp_data\?"INPUT A VALID \"USER:PASS\" COMBINATION (CTRL-C IF NONE): "
             usr=$(echo $snmp_data | cut -d':' -f1)
@@ -842,7 +843,7 @@ scan(){
         echo -e "\nMSF BRUTEFORCING (PROBABLE V2)\n"
         msfconsole -q -x "use auxiliary/scanner/rservices/rsh_login; set ANONYMOUS_LOGIN true; set USER_AS_PASS true; set BLANK_PASSWORDS true; set USER_FILE /usr/share/seclists/usernames/xato_top_1000_custom.txt; set PASS_FILE /usr/share/seclists/Passwords/probable-v2-top1575.txt; set RPORT $3; set RHOSTS $2; exploit; exit"
 
-        echo -e "\nBRUTEFORCING VALID USERS (XATO)\n"
+        echo -e "\nBRUTEFORCING VALID USERS (XATO-TOP-1000)\n"
         hydra -L /usr/share/seclists/usernames/xato_top_1000_custom.txt rsh://$2:$3 -v -V
     fi
 
