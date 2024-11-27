@@ -847,6 +847,10 @@ scan(){
         hydra -L /usr/share/seclists/usernames/xato_top_1000_custom.txt rsh://$2:$3 -v -V
     fi
 
+    if [[ $1 == "dhcp" ]]; then
+        echo -e "\nNMAP ENUMERATION\n"
+        sudo nmap -n -Pn -sCV --script="broadcast-dhcp* or dhcp-*" -p$3 $2
+    fi
 
     if [[ $1 == "rexec" ]]; then
         echo -e "\nMSF BRUTEFORCING (PROBABLE V2)\n"
