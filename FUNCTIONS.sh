@@ -19,19 +19,22 @@ hping(){
     sudo hping3 --syn -s 53 -p $2 -c 3 $1
 }
 
-# ICMP Polling Detection
+# Incoming ICMP from outside hosts
 listenping(){
     chnic
     sudo tcpdump ip proto \\icmp -i $inter
 }
 
-# Interactive Netcat Listener
+# Netcat Listener
 listen(){
     chnic
     sudo rlwrap -cAr nc -lvnp $1 -s $ip
 }
 
-# Interactive MSF Listener / Binder / Shell Generator
+# PyGPO Abuse Alias
+alias pygpoabuse='/home/kali/TOOLS/pyGPOAbuse/venv/bin/python3 ~/TOOLS/pyGPOAbuse/pygpoabuse.py'
+
+# MSF Listener / Binder Generator
 metash(){
     read os\?"SELECT OS (win32 / win64 / lin32 / lin64): "
     if [[ $os =~ ^lin* ]]; then
@@ -250,7 +253,7 @@ ftpserv(){
 smbserv(){
     chnic
     echo -e "OPENING SMB SHARE AT \\\\$ip\\share"
-    sudo smbserver.py -ip $ip -smb2support share .
+    smbserver.py -ip $ip -smb2support share .
 }
 
 webdavserv(){
@@ -259,9 +262,14 @@ webdavserv(){
     wsgidav --host=$ip --port=8000 --root=/tmp --auth=anonymous
 }
 
+# Neo4J for Bloodhound usage
+neostart(){
+    sudo neo4j console
+}
+
 # TCP / UDP Port Scanners
 tcp(){
-    echo -e "\nTCP SCANNING (TOP 99% RANGE)\n"
+    echo -e "\nTCP SCANNING (TOP 99%)\n"
     sudo nmap -sSCV -n -Pn --disable-arp-ping -g 53 -v --top-ports 3328 -T4 --min-rate=500 --open $1
 
     echo -e "\nTCP FULL BACKGROUND SCANNING\n"
@@ -269,12 +277,12 @@ tcp(){
 }
 
 udp(){
-    echo -e "\nUDP SCANNING (TOP 99% RANGE)\n"
+    echo -e "\nUDP SCANNING (TOP 99%)\n"
     sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v --top-ports 15094 -T4 --min-rate=500 $1 -oX /tmp/$1_UDP.txt
 
     udp_ports=$(cat /tmp/$1_UDP.txt | xmlstarlet sel -t -v '//port[state/@state="open"]/@portid' -nl | paste -s -d, -)
     sudo nmap -sUCV -n -Pn --disable-arp-ping -g 53 -p$udp_ports $1
-    sudo rm /tmp/$1_UDP.txt     
+    sudo rm /tmp/$1_UDP.txt
 
     echo -e "\nUDP FULL BACKGROUND SCANNING\n"
     sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v -p- -T4 --min-rate=500 $1
@@ -292,16 +300,10 @@ scan(){
         echo -e "\nENUMERATION\n"
         sudo nmap -n -Pn -v -sV --script="ftp-* and not brute" -p$3 $2
 
-        read fpts\?"INPUT A FTPS PORT (BLANK IF NONE): "
-        if [[ ! -z $fpts ]]; then
-            echo -e "\nGRABBING FTP CERTIFICATE\n"
-            echo "Q" | openssl s_client -connect $2:$3 -starttls ftp
-        fi
-
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/ftp-betterdefaultpasslist.txt ftp://$2:$3
- 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+
+        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -332,7 +334,7 @@ scan(){
         echo -e "\nNSLOOKUP LOCALHOST/IP QUERIES\n"
         echo "SERVER $2\n127.0.0.1\nlocalhost\n$2\nexit" | nslookup
 
-        read dnsdom\?"INPUT A DOMAIN TO ENUMERATE (BLANK IF NONE): "
+        read dnsdom\?"INPUT A DOMAIN TO ENUMERATE (BLANK TO SKIP): "
         if [[ ! -z $dnsdom ]]; then
             echo -e "\nNMAP SRV-ENUM RECORDS\n"
             sudo nmap -Pn -n -sUV -p$3 --script dns-srv-enum --script-args dns-srv-enum.domain=$dnsdom $2
@@ -404,22 +406,17 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/vmware/vmauthd_version; set RHOSTS $2; set RPORT $3; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/vmware/vmware_server_dir_trav; set RHOSTS $2; set RPORT $3; exploit; exit"     
         msfconsole -q -x "use auxiliary/scanner/vmware/vmware_update_manager_traversal; set RHOSTS $2; set RPORT $3; exploit; exit"
+   
     fi
 
     if [[ $1 == "smtp" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
         sudo nmap -n -Pn -v -sV --script=smtp-commands,smtp-ntlm-info,smtp-strangeport,smtp-vuln-cve2010-4344,smtp-vuln-cve2011-1720,smtp-vuln-cve2011-1764 -p$3 $2
 
-        read smtps\?"INPUT A SMTPS PORT (BLANK IF NONE): "
-        if [[ ! -z $smtps ]]; then
-            echo -e "\nGRABBING TLS CERTIFICATE\n"
-            echo "Q" | openssl s_client -starttls smtp -crlf -connect $2:$smtps
-        fi
-
         echo -e "\nMSF VERSION FINGERPRINT\n"
         msfconsole -q -x "use auxiliary/scanner/smtp/smtp_version; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read mtd\?"INPUT METHOD FOR USER BRUTEFORCING (BLANK IF NONE): "
+        read mtd\?"INPUT METHOD FOR USER BRUTEFORCING (BLANK TO SKIP): "
         if [[ ! -z $mtd ]]; then
             echo -e "\nBRUTEFORCING USERNAMES (Names)\n"
             smtp-user-enum -M $mtd -U /usr/share/seclists/Usernames/Names/names.txt -t $2 -p $3 -w 15
@@ -438,7 +435,7 @@ scan(){
         echo -e "\nTESTING SQL INJECTION\n"
         whois -h $2 -p $3 "a') or 1=1#"
 
-        read whois_dom\?"INPUT DOMAIN TO QUERY (BLANK IF NONE): "
+        read whois_dom\?"INPUT DOMAIN TO QUERY (BLANK TO SKIP): "
         if [[ ! -z $whois_dom ]]; then
             whois -h $2 -p $3 "$whois_dom"
         fi
@@ -452,7 +449,7 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/postgres-betterdefaultpasslist.txt postgres://$2:$3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             user=$(echo $creds | cut -d":" -f1)
             password=$(echo $creds | cut -d":" -f2)
@@ -504,7 +501,7 @@ scan(){
         echo -e "\nMSF ENUMERATION\n"
         msfconsole -q -x "use auxiliary/scanner/portmap/portmap_amp; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read resp\?"INPUT A VALID NIS DOMAIN (BLANK IF NONE): "
+        read resp\?"INPUT A VALID NIS DOMAIN (BLANK TO SKIP): "
         if [[ ! -z $resp ]]; then
             echo -e "\nDUMPING INFORMATION\n"
             ypwhich -d $resp $2
@@ -519,23 +516,17 @@ scan(){
         echo -e "\nBANNER GRABBING\n"
         echo "quit" | nc -vn $2 $3
 
-        read pop3s\?"INPUT A POP3S PORT (BLANK IF NONE): "
-        if [[ ! -z $pop3s ]]; then
-            echo -e "\nGRABBING CERTIFICATE\n"
-            echo "Q" | openssl s_client -connet $2:$pop3s -crlf -quiet
-        fi
-
         echo -e "\nNMAP ENUMERATION\n"
         sudo nmap -n -Pn -v -sV --script "pop3-* and not brute" -p$3 $2
-
+    
         echo -e "\nMSF FINGERPRINT\n"
         msfconsole -q -x "use auxiliary/scanner/pop3/pop3_version; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): " 
+        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): " 
         if [[ ! -z $cred ]]; then
             usr=$(echo $cred | cut -d":" -f1)
             psw=$(echo $cred | cut -d":" -f2)
-
+           
             echo -e "\nLISTING MESSAGES\n"
             curl -u "$usr:$psw" -s pop3://$2:$3
 
@@ -551,7 +542,7 @@ scan(){
         echo -e "\nSHOWMOUNTING CHECKS\n"
         showmount -e $2
 
-        read shr\?"INPUT MOUNTABLE SHARE (BLANK IF NONE): "
+        read shr\?"INPUT MOUNTABLE SHARE (BLANK TO SKIP): "
         if [[ ! -z $shr ]]; then
             echo -e "\nMOUNTING TO \"/mnt/$2_$shr\"\n"
             sudo mkdir /mnt/$2_$shr && sudo mount -t nfs $2:/$shr /mnt/$2_$shr -o nolock && cd /mnt/$2_$shr
@@ -586,7 +577,7 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/ntp/ntp_unsettrap_dos; set RHOSTS $2; set RPORT $3; exploit; exit"
     fi
 
-    if [[ $1 == "snmp" ]]; then
+    if [[ $1 == "snmp" ]]; then 
         echo -e "\nFINGERPRINTING VERSION\n"
         sudo nmap -n -Pn -sUV --script "snmp-info" -p$3 $2
 
@@ -620,8 +611,8 @@ scan(){
             echo -e "\nGREPPING FOR PRIVATE STRINGS / USER LOGINS\n"
             cat $2_SNMPWALK.txt | grep -i "trap\|login\|fail"
 
-            echo -e "\nGREPPING FOR EMAILS\n"
-            grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b" $2_SNMPWALK.txt
+            echo -e "\nGREPPING FOR EMAILS\n"       
+            grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b" $2_SNMPWALK.txt    
 
         else
             echo -e "\nBRUTEFORCING COMMUNITY STRING\n"
@@ -637,7 +628,7 @@ scan(){
             echo -e "\nGREPPING FOR PRIVATE STRINGS / USER LOGINS\n"
             cat $2_SNMPWALK.txt | grep -i "trap\|login\|fail"
 
-            echo -e "\nGREPPING FOR EMAILS\n"
+            echo -e "\nGREPPING FOR EMAILS\n"       
             grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}\b" $2_SNMPWALK.txt
 
             echo -e "\nTRYING TO SPAWN A NET-SNMP SHELL (WRITE PRIVILEGE)\n"
@@ -661,17 +652,11 @@ scan(){
     if [[ $1 == "imap" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
         sudo nmap -n -Pn -sV --script="imap-* and not brute" -p$3 $2
-
+    
         echo -e "\nMSF FINGERPRINT\n"
         msfconsole -q -x "use auxiliary/scanner/imap/imap_version; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read imaps\?"INPUT A IMAPS PORT (BLANK IF NONE): "
-        if [[ ! -z $imaps ]]; then
-            echo -e "\nGRABBING CERTIFICATE\n"
-            echo "Q" | openssl s_client -connect $2:$3 -quiet
-        fi
-
-        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $cred ]]; then
             usr=$(echo $cred | cut -d":" -f1)
             psw=$(echo $cred | cut -d":" -f2)
@@ -679,7 +664,7 @@ scan(){
             echo -e "\nLISTING MAILBOXES\n"
             curl -u "$usr:$psw" imap://$2:$3 -X 'LIST "" "*"'
 
-            while true; do read mailbox\?"INPUT MAILBOX TO READ: " && curl -u "$usr:$psw" imap://$2:$3/$mailbox && read index\?"INPUT MAIL UID TO READ (BLANK IF NONE): " && curl -u "$usr:$psw" "imap://$2:$3/$mailbox;UID=$index"; done
+            while true; do read mailbox\?"INPUT MAILBOX TO READ: " && curl -u "$usr:$psw" imap://$2:$3/$mailbox && read index\?"INPUT MAIL UID TO READ (BLANK TO SKIP): " && curl -u "$usr:$psw" "imap://$2:$3/$mailbox;UID=$index"; done
         fi
 
     fi
@@ -696,7 +681,7 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS $2; set RPORT $3; set OUTPUT_JOHN_FILE /tmp/$2_IPMI.john; exploit; exit"
         if [[ -f /tmp/$2_IPMI.hashcat ]]; then
             echo -e "\nFOUND HASH, CRACKING WITH ROCKYOU\n"
-            john --wordlist=/usr/share/wordlists/rockyou.txt --fork=15 --session=ipmi --rules=Jumbo --format=rakp /tmp/$2_IPMI.john
+            john --wordlist=/usr/share/wordlists/weakpass_4.txt --fork=15 --session=ipmi --rules=Jumbo --format=rakp /tmp/$2_IPMI.john
         fi
 
         echo -e "\nCHECKING CIPHER ZERO\n"
@@ -709,10 +694,10 @@ scan(){
         fi
     fi
 
-    if [[ $1 == "ldap" ]]; then
-        echo -e "\nNMAP SCANNING\n"
+    if [[ $1 == "ldap" ]]; then 
+        echo -e "\nNMAP SCANNING\n" 
         sudo nmap -n -Pn -sV --script "ldap-* and not brute" -p$3 $2
-
+        
         echo -e "\nTESTING NULL BIND\n"
         ldapsearch -H ldap://$2:$3 -x -s base namingcontexts
     fi
@@ -730,7 +715,7 @@ scan(){
     if [[ $1 == "afp" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
         sudo nmap -n -Pn -sV --script="afp-* and not dos and not brute"
-
+    
         echo -e "\nMSF ENUMERATION\n"
         msfconsole -q -x "use auxiliary/scanner/afp/afp_server_info; set RHOSTS $2; set RPORT $3; exploit; exit"
     fi
@@ -798,11 +783,11 @@ scan(){
             while read line; do (echo "Found ID: $line" && sudo ike-scan -d $3 -M -A -n $line $2) | grep -B14 "1 returned handshake" | grep "Found ID:"; done < ~/WORDLISTS/ike-custom.txt
         fi
 
-        read ike_id\?"INPUT A VALID IKE-ID (BLANK IF NONE): "
+        read ike_id\?"INPUT A VALID IKE-ID (BLANK TO SKIP): "
         if [[ ! -z $ike_id ]]; then
             echo -e "\nGRABBING AND CRACKING HASH\n"
             ike-scan -M -A -n $ike_id --pskcrack=$2_hash.txt $2
-            pks-crack -d /usr/share/wordlists/rockyou.txt $2_hash.txt    
+            psk-crack -d /usr/share/wordlists/weakpass_4.txt $2_hash.txt    
 
             read ike_psw\?"INPUT FOUND PSK PASSWORD: "
             if [[ ! -z $ike_psw ]]; then
@@ -842,7 +827,7 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/mssql-betterdefaultpasslist.txt $1://$2:$3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -880,7 +865,7 @@ scan(){
         echo -e "\nODAT TESTING\n"
         odat all -s $2 -p $3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -951,7 +936,7 @@ scan(){
             fi
 
             echo -e "\nADDING PROXY\n"
-            echo "http $2 $3$flg" | sudo tee --append /etc/proxychains4.conf
+            echo "http $2 $3$flg" | sudo tee --append /etc/proxychains.conf
 
             echo -e "\nTESTING CONNECT SCAN (TOP 100 PORTS)\n"
             sudo proxychains nmap -sT -n --top-ports 100 127.0.0.1
@@ -968,7 +953,7 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/mysql-betterdefaultpasslist.txt mysql://$2:$3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -992,7 +977,7 @@ scan(){
         echo -e "\nCHECKING GUEST AUTHENTICATION\n"
         curl -kIL http://$2:$3/api/connections -u guest:guest
 
-        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $cred ]]; then
             echo -e "\nFETCHING API CONNECTIONS\n"
             curl -kIL http://$2:$3/api/connections -u "$cred"
@@ -1001,7 +986,7 @@ scan(){
         read amqp_hash\?"INPUT B64 AMQP HASH IF FOUND: "
         if [[ ! -z $amqp_hash ]]; then
             echo $amqp_hash | base64 -d | xxd -pr -c128 | perl -pe 's/^(.{8})(.*)/$2:$1/' > /tmp/$2_AMQP.txt
-            hashcat -m 1420 --hex-salt /tmp/$2_AMQP.txt /usr/share/wordlists/rockyou.txt
+            hashcat -m 1420 --hex-salt /tmp/$2_AMQP.txt /usr/share/wordlists/weakpass_4.txt
         fi
     fi
 
@@ -1009,7 +994,7 @@ scan(){
         echo -e "\nENUMERATION\n"
         sudo nmap -n -pn -v -sV --script="mongodb-* and not brute" -p$3 $2
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -1037,7 +1022,7 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/rdp/cve_2019_0708_bluekeep; set RPORT $3; set RHOSTS $2; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/rdp/ms12_020_check; set RPORT $3; set RHOSTS $2; exploit; exit"
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK IF NONE): "
+        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -1080,16 +1065,10 @@ techscan(){
             fi
         fi
 
-        if [[ $scheme == "https" ]]; then
-            echo -e "\nGETTING SSL CERTIFICATE\n"
-            echo "Q" | openssl s_client -connect $host:$port
-
-            echo -e "\nTESTING SSL VULNERABILITIES\n"
-            cur=$(pwd) && cd ~/TOOLS/a2sv && python2 a2sv.py -d n -t $host:$port && cd $cur
-        fi
-
-        echo -e "\nHTTPX CHECK\n"
+        echo -e "\nHTTPX / CDN CHECK\n"
+        httpx -up &>/dev/null && cdncheck -up &>/dev/null
         echo $1 | httpx -fr -silent -sc -server -title -cdn -cname -td
+        echo $1 | cdncheck
 
         echo -e "\nSERVER HEADER\n"
         curl -kIL $1
@@ -1103,17 +1082,32 @@ techscan(){
         echo -e "\nCHECKING WAF PRESENCE\n"
         wafme0w -t $1 --no-warning --concurrency 15
 
-        read pub\?"IS THE DOMAIN PUBLICLY AVAILABLE? (Y/N): "
+        read pub\?"IS THE DOMAIN BEHIND CLOUDFLARE? (Y/N): "
         if [[ $pub =~ [Yy] ]]; then
-            echo -e "\nCHECKING CLOUDFLARE UNCOVERING\n"
-            cd /home/kali/TOOLS/CloakQuest3r && python3 cloakquest3r.py $domain
+            echo -e "\nCHECKING UNCOVERING & PUBLIC SUBDOMAINS\n"
+            cur=$(pwd) && cd /home/kali/TOOLS/CloakQuest3r && ./venv/bin/python3 cloakquest3r.py $domain && cd $cur
         fi
 
         echo -e "\nNMAP ENUMERATION\n"
         sudo nmap -Pn -sV --script="http-enum" -p$port $host
 
         echo -e "\nNIKTO HOST SCANNING\n"
-        nikto -h $host:$port -Tuning b        
+        nikto -h $host:$port -Tuning b
+
+        if [[ $scheme == "https" ]]; then
+            echo -e "\nTESTING SSL VULNERABILITIES\n"
+            if [[ $port == "443" ]]; then
+                flg=""
+            else
+                flg=":$port"
+            fi
+            cur=$(pwd) && cd ~/TOOLS/a2sv && python2 a2sv.py -d n -t $host$flg && cd $cur
+        fi
+}
+
+#CORS Scanning
+corscan(){
+    /home/kali/TOOLS/Corsy/venv/bin/python3 ~/TOOLS/Corsy/corsy.py -u $1
 }
 
 #Crawling/JS Scraping Function
@@ -1153,14 +1147,13 @@ jsmine(){
 # Passwordlist generation
 pswgen(){
     dom=$(echo $1 | unfurl format %d)
-    ext=$(echo $dom | cut -d'.' -f1)
 
     echo -e "\nGENERATING WORDLIST\n"
-    cewl $1 -d 4 -m 5 --lowercase -w $ext_passwords.txt
+    cewl $1 -d 4 -m 5 --lowercase -w passwords_$dom.txt
 
     echo -e "\nHASHCAT MANGLING\n"
-    hashcat --stdout --rules-file /usr/share/hashcat/rules/my_custom.rule $ext_passwords.txt > /tmp/hsh.txt
-    cat /tmp/hsh.txt | sort -u | shuf > $ext_mangled.txt; rm /tmp/hsh.txt 
+    hashcat --stdout --rules-file /usr/share/hashcat/rules/my_custom.rule passwords_$dom.txt > /tmp/pstmp_$dom.txt
+    cat /tmp/pstmp_$dom.txt | sort -u | shuf > mangled_$dom.txt; rm /tmp/pstmp_$dom.txt 
 }
 
 # Endpoints Generation
@@ -1172,15 +1165,15 @@ urlgen(){
 # Usernames Generation
 usergen(){
     echo -e "\nGENERATING USERNAMES\n"
-    ~/TOOLS/username-anarchy/username-anarchy -i $1 > gen_usernames.txt
+    ~/TOOLS/username-anarchy/username-anarchy -i $1 > gen_users.txt
 }
 
-# Default credentials (Network / Web)
+# Default credentials for services / applications
 searchpass(){
     sudo pass-station search $1
 }
 
-# Content Discovery --> (Directories, Exposures/Files, Backup Files, API Endpoints)
+# Content Discovery --> (Directories, Files, Backups)
 dirfuzz(){    
     echo -e "\nSEARCHING COMMON CONTENT\n"
     ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
@@ -1218,21 +1211,24 @@ dirfuzz(){
     ffuf -ac -acs advanced -u $1/FUF1FUF2 -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt:FUF1 -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUF2 -v
 }
 
-apifuzz(){
-    echo -e "\nLAUNCHING KITERUNNER ON TARGET\n"
-    kr scan $1/ -w ~/WORDLISTS/routes-large.kite
-}
-
 bckfile(){
     echo -e "\nSEARCHING BACKUPS OF FILE \"$1\"\n"
     bfac -u $1
 }
 
+# API Endpoint Search
+apifuzz(){
+    echo -e "\nCHECKING GRAPHQL EXPOSURES\n"
+    python3 ~/TOOLS/graphw00f/main.py -d -f -t http://testphp.vulnweb.com
+
+    echo -e "\nREST ENDPOINT SEARCH ON TARGET\n"
+    kr scan $1/ -w ~/WORDLISTS/routes-large.kite
+}
+
 # GET Parameter fuzzing
 paramfuzz(){
-    echo -e "\nFUZZING QUERY STRING \"$1\"\n"
     nuclei -up &> /dev/null && nuclei -ut &> /dev/null
-    nuclei -u $1 -headless -dast -rl 25 -c 5
+    nuclei -u $1 -dast -t ~/.local/nuclei-templates/dast/ -rl 25 -c 5
 }
 
 # GET/POST Parameter discovery
@@ -1253,8 +1249,7 @@ headscan(){
 # 403 Bypasser
 bypass(){
     echo -e "\nCOMMON ATTACKS\n"
-    ~/TOOLS/4-ZERO-3/403-bypass.sh $1
-    cd /home/kali/TOOLS/nomore403; ./nomore403 -u $1 -m 10 -d 350
+    ~/TOOLS/bypass-403/bypass-403.sh $(echo $1 | unfurl format %s://%d) $(echo $1 | unfurl format %p | cut -c 2-)
 
     echo -e "\nH2C SMUGGLING CHECK\n"
     ~/TOOLS/h2csmuggler/h2csmuggler.py -x $(echo $1 | unfurl format %s://%d) $1
@@ -1333,19 +1328,19 @@ wordscan(){
     bfac -u $1/wp-config --threads 3 --level 4 | grep "Response-Code: 200"
 }
 
-# Cache Poisoning checker
+# Cache Poisoning common misconfigurations
 poison(){
     echo -e "\nCHECKING COMMON HEADERS\n"
     toxicache -i $1
 
     echo -e "\nCHECKING MORE HEADERS AND PARAMETERS\n"
-    wcvs -u $1 --hw ~/WORDLISTS/headers.txt --pw ~/WORDLISTS/parameters.txt
+    wcvs -u $1 --hw /usr/share/seclists/Discovery/Web-Content/BurpSuite-ParamMiner/uppercase-headers --pw  /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt
 }
 
 # Open Redirection scanner (GET parameters / URI Path)
 redscan(){
     cur=$(pwd); cd ~/TOOLS/Oralyzer
-    python3 oralyzer.py -u $1
+    /home/kali/TOOLS/Oralyzer/venv/bin/python3 oralyzer.py -u $1
     cd $cur
 }
 
@@ -1373,12 +1368,11 @@ crscan(){
     cd $cur
 }
 
-# Reflected / Blind / DOM XSS Crawling
+# Common Reflected / Blind / DOM XSS Crawling
 xsscan(){
     read xsscookie\?"INPUT COOKIE HEADER IF NEEDED: "
     if [[ -z $xsscookie ]]; then
         wingman -u $1 --crawl
-        exit
     else
         wingman -u $1 --crawl -h "$xsscookie"
     fi
@@ -1397,7 +1391,7 @@ osscan(){
     python3 ~/TOOLS/commix/commix.py -r $1 --flush-session --ignore-session --batch --current-user --level=3
 }
 
-# CSSP Scan
+# CSSP URI Scan
 ppscan(){
     echo $1 | ppmap
 }
@@ -1435,7 +1429,7 @@ paramine(){
 
     echo -e "\nFUZZING PARAMETERS\n"
     nuclei -up &> /dev/null && nuclei -ut &> /dev/null
-    nuclei -ss host-spray -l $(echo $1 | unfurl format %d)_params.txt -headless -dast -t ~/.local/nuclei-templates/dast/ -rl 25 -c 5 -v
+    nuclei -ss host-spray -l $(echo $1 | unfurl format %d)_params.txt -dast -t ~/.local/nuclei-templates/dast/ -rl 25 -c 5 -v
 }
 
 # Google fingerprinting for a root domain
@@ -1460,7 +1454,7 @@ gmine(){
 
 # WayBackMachine 200-URL Mining
 urlmine(){
-    httpx -up
+    httpx -up &>/dev/null
     echo $1 | waymore -mode U && cat ~/.config/waymore/results/$1/waymore.txt | httpx -random-agent -fr -mc 200 -silent -sc -server -title -cdn -cname
 }
 
@@ -1468,7 +1462,7 @@ urlmine(){
 filemine(){
     echo -e "\nFETCHING RAW ARCHIVE DATA\n"
     echo $1 | waymore -mode U
-    httpx -up
+    httpx -up &>/dev/null 
 
     echo -e "\nSEARCHING GOOGLE DRIVE / DOCS\n"
     cat ~/.config/waymore/results/$1/waymore.txt | grep -E "(drive.google | docs.google)" | httpx -fr -mc 200
@@ -1523,8 +1517,7 @@ subfind(){
 	subfinder -d $1 -config ~/.config/subfinder/config.yml -silent | anew -q subdomains.txt
     echo $1 | haktrails subdomains | anew -q subdomains.txt
 	assetfinder --subs-only $1 | anew -q subdomains.txt
-    ~/TOOLS/findomain -quiet -t $1 | anew -q subdomains.txt; rm iet 2>/dev/null
-    ~/TOOLS/ctfr/ctfr.py -d $1 -o /tmp/log_ctr; cat /tmp/log_ctr | anew -q subdomains.txt; rm /tmp/log_ctr
+    findomain -quiet -t $1 | anew -q subdomains.txt; rm iet 2>/dev/null
     echo -e "\nFINISHED GETTING SUBDOMAINS\n"
 }
 
@@ -1553,6 +1546,7 @@ resolve(){
 
     echo -e "\nFETCHING IP/CNAME RECORDS\n"
     massdns -r ~/WORDLISTS/public_resolvers.txt -t A -o S -w dns_records.txt resolved.txt
+    grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' dns_records.txt > ipv4_addresses.txt
 }
 
 # DNS Bruteforcing function
@@ -1576,19 +1570,19 @@ subperm(){
     puredns resolve ~/WORDLISTS/permutations.txt -r ~/WORDLISTS/public_resolvers.txt sub_perms.txt > permuted_resolved.txt; rm sub_perms.txt
 }
 
-# DNS Takeover functione
+# Subdomain Takeover function
 takeover(){
     echo -e "\nTESTING DNS TAKEOVERS\n"
     sudo service docker start
+    sleep 1
     sudo docker run -it --rm -v $(pwd):/etc/dnsreaper punksecurity/dnsreaper file --filename /etc/dnsreaper/$1
 
     echo -e "\nTESTING NUCLEI TAKEOVERS\n"
     nuclei -up >/dev/null && nuclei -ut >/dev/null
-    nuclei -l $1 -ss host-spray -silent -t detect-all-takeovers.yaml -rl 25 -c 5
     nuclei -l $1 -ss host-spray -silent -t http/takeovers -rl 25 -c 5
 }
 
-# Web application probing (list of domains)
+# Web application probing on resolved domains
 webprobe(){
     mkdir WEB_SCAN && cd WEB_SCAN && cp ../$1 .
 
@@ -1597,7 +1591,7 @@ webprobe(){
     rm -rf unimap_logs
 
     echo -e "\nFILTERING ALIVE APPLICATIONS\n"
-    httpx -up
+    httpx -up &>/dev/null
     cat web_unimap_scan | httpx -random-agent -fr -silent -fc 404 -sc -server -title -td -cdn -cname -o websites_alive.txt
 
     echo -e "\nSCREENSHOOTING SERVICES\n"
@@ -1609,20 +1603,16 @@ webprobe(){
 alive(){
     cidr_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
     if [ -f ./$1 ]; then
-        echo -e "\nNMAP DISCOVERY\n"
+        echo -e "\nNMAP SWEEPING\n"
         sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5
-        exit
 
     elif [[ $1 =~ $cidr_regex ]]; then
-        echo -e "\nFPING SWEEPING\n"
-        fping -asqg $1
-
-        echo -e "\nNMAP DISCOVERY\n"
+        echo -e "\nNMAP SWEEPING\n"
         sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 $1 | grep for | cut -d" " -f5
     fi
 }
 
-# Passive Fingerprint (CIDR / ASN)
+# Shodan Fingerprinting (CIDR / ASN)
 fingerprint_util(){
     echo -e "\nPASSIVE SHODAN FINGERPRINT\n"
     cat $1 | nrich -
@@ -1635,23 +1625,44 @@ shodscan(){
     if [[ $1 =~ $asn_regex ]]; then
         echo -e "\nCHECKKING IPv4 ADDRESSES FROM $1\n"
         whois -h whois.radb.net -- "-i origin $1" | grep -Eo "([0-9.]+){4}/[0-9]+" | mapcidr -silent | anew -q raw_ipv4.txt
-        sudo nmap -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL raw_ipv4.txt | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt; rm raw_ipv4.txt
+        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt; rm raw_ipv4.txt
         cat alive_ipv4.txt
         fingerprint_util alive_ipv4.txt
 
     elif [[ $1 =~ $cidr_regex ]]; then
         echo -e "\nCHECKING IPv4 ADDRESSES FROM $1\n"
         echo $1 | mapcidr -silent | anew -q raw_ipv4.txt
-        sudo nmap  -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL raw_ipv4.txt | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt; rm raw_ipv4.txt
+        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt; rm raw_ipv4.txt
         cat alive_ipv4.txt
         fingerprint_util alive_ipv4.txt
 
     else
         echo -e "\nCHECKING IP ADDRESSES\n"
-        sudo nmap  -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt
+        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt
         cat alive_ipv4.txt
         fingerprint_util alive_ipv4.txt
     fi
+}
+
+# Host Mapping Search -> Using https://wordlists-cdn.assetnote.io/data/technologies
+hostmap() {
+    local search_string="$1"
+    local hostmap_folder=~/WORDLISTS/HOSTMAP
+
+    if [[ -z "$search_string" ]]; then
+        echo "Usage: search_in_hostmap <string>"
+        return 1
+    fi
+
+    for file in "$hostmap_folder"/*; do
+        if [[ -f "$file" ]]; then
+            # Extract filename without path and extension
+            local filename=$(basename "$file" .txt)
+            echo "Searching in $filename:"
+            cat $file | grep $search_string | sort -u || echo "No match found"
+            echo "" # Print a newline for better readability
+        fi
+    done
 }
 
 # Cloud assets searching
@@ -1661,14 +1672,22 @@ cloudfind(){
     /home/kali/TOOLS/cloud_enum/venv/bin/python3 ~/TOOLS/cloud_enum/cloud_enum.py -k $1 -k $root
 }
 
-# Github repository scraping
+# -----------OPEN SOURCE TESTING-----------------#
+# Github repository search
 gitfind(){
     echo -e "\nSEARCHING REPOSITORY \"$1\"\n"
     trufflehog github --repo=$1 --only-verified
 }
 
+# Domain scraping on GitHub
 gitscrape(){
     echo -e "\nSCRAPING DOMAIN ON GIT\n"
     cd ~/TOOLS/GitHound
-    echo "\"$1\"" | ./git-hound
+    echo "\"$1\"" | ./git-hound --dig-files --dig-commits --many-results --results-only
+}
+
+# Semgrep repository scan
+codescan(){
+    echo -e "\nCHECKING FOLDER \"$1\" FOR MISCONFIGURATIONS\n"
+    semgrep scan --config auto --pro $1
 }
