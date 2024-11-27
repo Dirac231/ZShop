@@ -1219,7 +1219,7 @@ bckfile(){
 # API Endpoint Search
 apifuzz(){
     echo -e "\nCHECKING GRAPHQL EXPOSURES\n"
-    python3 ~/TOOLS/graphw00f/main.py -d -f -t http://testphp.vulnweb.com
+    python3 ~/TOOLS/graphw00f/main.py -d -f -t $1
 
     echo -e "\nREST ENDPOINT SEARCH ON TARGET\n"
     kr scan $1/ -w ~/WORDLISTS/routes-large.kite
