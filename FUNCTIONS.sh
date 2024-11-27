@@ -348,8 +348,8 @@ scan(){
             echo -e "\nFINDING DC IP FOR THE DOMAIN\n"
             nslookup -type=SRV _ldap._tcp.dc._msdcs.$dnsdom $2
 
-            echo -e "\nRECUSRIVE TRANSFER AND BRUTEFORCING (SORTED-COMBINED)\n"
-            dnsenum --dnsserver $2 --enum -p 0 -s 0 -r -f /usr/share/seclists/Discovery/DNS/sortedcombined-knock-dnsrecon-fierce-reconng.txt $dnsdom
+            echo -e "\nRECUSRIVE TRANSFER AND BRUTEFORCING (TOP-110000)\n"
+            dnsenum --dnsserver $2 --enum -p 0 -s 0 -r -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt $dnsdom
 
             echo -e "\nCHECKING INTERNAL PTR RECORDS\n"
             dnsrecon -r 127.0.0.0/24 -n $2 -d $dnsdom
@@ -1261,7 +1261,7 @@ bypass(){
 
 # Host Reflections / Misroutings
 vhost(){
-    echo -e "\nCHECKING HOST MISROUTING\n"
+    echo -e "\nCHECKING HOST MISROUTING (TOP-110000)\n"
     ffuf -mc all -ac -acs advanced -u $1 -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -H "Host: FUZZ.$(echo $1 | unfurl format %d)"
 }
 
