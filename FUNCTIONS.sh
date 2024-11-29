@@ -270,22 +270,28 @@ neostart(){
 # TCP / UDP Port Scanners
 tcp(){
     echo -e "\nTCP SCANNING (TOP 99%)\n"
-    sudo nmap -sSCV -n -Pn --disable-arp-ping -g 53 -v --top-ports 3328 -T4 --min-rate=500 --open $1
+    sudo nmap -sSCV -n -Pn --disable-arp-ping -g 53 -v --top-ports 3328 -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1
 
     echo -e "\nTCP FULL BACKGROUND SCANNING\n"
-    sudo nmap -sS -n -Pn --disable-arp-ping -g 53 -v -p- -T4 --min-rate=500 --open $1
+    sudo nmap -sS -n -Pn --disable-arp-ping -g 53 -v -p- -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1
 }
 
 udp(){
-    echo -e "\nUDP SCANNING (TOP 99%)\n"
-    sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v --top-ports 15094 -T4 --min-rate=500 $1 -oX /tmp/$1_UDP.txt
+    echo -e "\nUDP SERVICE SCANNING (TOP 100)\n"
+    sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v --top-ports 100 -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1 -oX /tmp/$1_UDP.txt
+    udp_ports=$(cat /tmp/$1_UDP.txt | xmlstarlet sel -t -v '//port[state/@state="open"]/@portid' -nl | paste -s -d, -)
+    sudo nmap -sUV -n -Pn --disable-arp-ping -g 53 -p$udp_ports -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 $1
+    sudo rm /tmp/$1_UDP.txt
+
+    echo -e "\nUDP SERVICE SCANNING (TOP 99%)\n"
+    sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v --top-ports 15094 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1 -oX /tmp/$1_UDP.txt
 
     udp_ports=$(cat /tmp/$1_UDP.txt | xmlstarlet sel -t -v '//port[state/@state="open"]/@portid' -nl | paste -s -d, -)
-    sudo nmap -sUCV -n -Pn --disable-arp-ping -g 53 -p$udp_ports $1
+    sudo nmap -sUV -n -Pn --disable-arp-ping -g 53 -p$udp_ports $1
     sudo rm /tmp/$1_UDP.txt
 
     echo -e "\nUDP FULL BACKGROUND SCANNING\n"
-    sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v -p- -T4 --min-rate=500 $1
+    sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v -p- --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1
 }
 
 # Tracerouting
@@ -594,20 +600,20 @@ scan(){
             read snmp_os\?"INPUT OPERATING SYSTEM (lin, win): "
             if [[ $snmp_os == "win" ]]; then
                 echo -e "\nEXTRACING USERS\n"
-                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 NET-SNMP-EXTEND-MIB::nsExtendOutputFull 1.3.6.1.4.1.77.1.2.25
+                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 1.3.6.1.4.1.77.1.2.25
 
                 echo -e "\nEXTRACTING PROCESSES\n"
-                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 NET-SNMP-EXTEND-MIB::nsExtendOutputFull 1.3.6.1.2.1.25.4.2.1.2            
+                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 1.3.6.1.2.1.25.4.2.1.2            
 
                 echo -e "\nEXTRACTING INSTALLED SOFTWARE\n"
-                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 NET-SNMP-EXTEND-MIB::nsExtendOutputFull 1.3.6.1.2.1.25.6.3.1.2
+                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 1.3.6.1.2.1.25.6.3.1.2
 
                 echo -e "\nEXTRACING LOCAL PORTS\n"
-                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 NET-SNMP-EXTEND-MIB::nsExtendOutputFull 1.3.6.1.2.1.6.13.1.3
+                snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 1.3.6.1.2.1.6.13.1.3
             fi
 
             echo -e "\nFETCHING STRINGS IN \"$2_SNMPWALK.txt\"\n"
-            snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 NET-SNMP-EXTEND-MIB::nsExtendOutputFull | grep -v "INTEGER|Gauge32|IpAddress|Timeticks|Counter32|OID|Hex-STRING|Counter64" | tee > $2_SNMPWALK.txt
+            snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 | grep -v "INTEGER|Gauge32|IpAddress|Timeticks|Counter32|OID|Hex-STRING|Counter64" | tee > $2_SNMPWALK.txt
 
             echo -e "\nGREPPING FOR PRIVATE STRINGS / USER LOGINS\n"
             cat $2_SNMPWALK.txt | grep -i "trap\|login\|fail"
@@ -624,7 +630,7 @@ scan(){
             snmp-check -v $snmp_ver -p $3 -d -c $com_string $2 > $2_SNMPCHECK.txt
 
             echo -e "\nDUMPING MIB STRINGS IN \"$2_SNMPWALK.txt\"\n"
-            snmpwalk -mAll -r 2 -t 10 -v$snmp_ver -c $com_string $2:$3 NET-SNMP-EXTEND-MIB::nsExtendOutputFull | grep -v "INTEGER|Gauge32|IpAddress|Timeticks|Counter32|OID|Hex-STRING|Counter64" | tee > $2_SNMPWALK.txt
+            snmpwalk -mAll -r 2 -t 10 -v$snmp_ver -c $com_string $2:$3 | grep -v "INTEGER|Gauge32|IpAddress|Timeticks|Counter32|OID|Hex-STRING|Counter64" | tee > $2_SNMPWALK.txt
 
             echo -e "\nGREPPING FOR PRIVATE STRINGS / USER LOGINS\n"
             cat $2_SNMPWALK.txt | grep -i "trap\|login\|fail"
@@ -1273,7 +1279,7 @@ guidcheck(){
 # Wordpress scanning function
 wordscan(){
     echo -e "\nENUMERATING COMPONENTS VIA WPSCAN\n"
-    wpscan --update --api-token $wp_scan_api --url $1 --enumerate u,vp,vt,cb,dbe --rua
+    wpscan --api-token $wp_scan_api --url $1 --enumerate u,vp,vt,cb,dbe --rua
 
     echo -e "\nYOU CAN TEST PASSWORD SPRAYING VIA \"wpscan --url $1 --users USERS.txt --passwords PASS.txt\"\n"
 
