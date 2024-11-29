@@ -1260,6 +1260,7 @@ headscan(){
 bypass(){
     echo -e "\nCOMMON ATTACKS\n"
     ~/TOOLS/bypass-403/bypass-403.sh $(echo $1 | unfurl format %s://%d) $(echo $1 | unfurl format %p | cut -c 2-)
+    ~/TOOLS/4-ZERO-3/403-bypass.sh -u $1 --exploit
 
     echo -e "\nH2C SMUGGLING CHECK\n"
     ~/TOOLS/h2csmuggler/h2csmuggler.py -x $(echo $1 | unfurl format %s://%d) $1
