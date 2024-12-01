@@ -366,8 +366,10 @@ scan(){
         echo -e "\nTESTING DEFAULT CREDENTIALS\n"
         hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/ssh-betterdefaultpasslist.txt ssh://$2:$3
 
-        echo -e "\nMSF ENUMERATION\n"
+        echo -e "\nMSF ENUMERATION (XATO-TOP-1000)\n"
         msfconsole -q -x "use auxiliary/scanner/ssh/ssh_enumusers; set USER_FILE /usr/share/seclists/Usernames/xato_top_1000_custom.txt; set RHOSTS $2; set RPORT $3; exploit; exit"
+
+        echo -e "\nMSF BACKDOOR CHECKS\n"
         msfconsole -q -x "use auxiliary/scanner/ssh/libssh_auth_bypass; set RHOSTS $2; set RPORT $3; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/ssh/juniper_backdoor; set RHOSTS $2; set RPORT $3; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/ssh/fortinet_backdoor; set RHOSTS $2; set RPORT $3; exploit; exit"
@@ -475,7 +477,7 @@ scan(){
         echo -e "\nTESTING \"/bin/id\" INJECTION\n"
         finger "|/bin/id@$2"
 
-        echo -e "\nENUMERATING USERS\n"
+        echo -e "\nENUMERATING USERS (XATO-TOP-1000)\n"
         msfconsole -q -x "use auxiliary/scanner/finger/finger_users; set RHOSTS $2; set RPORT $3; set USERS_FILE /usr/share/seclists/Usernames/xato_top_1000_custom.txt; exploit; exit"
     fi
 
@@ -556,9 +558,9 @@ scan(){
         ntpq -c readvar $2
         ntpq -c associations $2
         ntpq -c peers $2
-        ntpdc -c monlist $2
-        ntpdc -c listpeers $2
-        ntpdc -c sysinfo $2
+        ntpd -c monlist $2
+        ntpd -c listpeers $2
+        ntpd -c sysinfo $2
 
         echo -e "\nMSF DOS CHECKS\n"
         msfconsole -q -x "use auxiliary/scanner/ntp/ntp_peer_list_dos; set RHOSTS $2; set RPORT $3; exploit; exit"
@@ -630,15 +632,15 @@ scan(){
 
     if [[ $1 == "rpc" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
-	    sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
+	sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
 
-	    echo -e "\nTRYING NULL/GUEST BINDINGS\n"
+	echo -e "\nTRYING NULL/GUEST BINDINGS\n"
         rpcclient -U "" -N $2
-	    rpcclient -U "%" -N $2 
+	rpcclient -U "%" -N $2 
         rpcclient -U "Guest" -N $2
 
         echo -e "\nCHECKING IOXID INTERFACES/IPs\n"
-        python3 ~/TOOLS/IOXIDResolver/IOXIDResolver.py -t $2
+        /home/kali/TOOLS/IOXIDResolver/venv/bin/python3 ~/TOOLS/IOXIDResolver/IOXIDResolver.py -t $2
     fi
 
     if [[ $1 == "imap" ]]; then
@@ -831,7 +833,7 @@ scan(){
     fi
 
     if [[ $1 == "rsh" ]]; then
-        echo -e "\nMSF BRUTEFORCING (PROBABLE V2)\n"
+        echo -e "\nMSF BRUTEFORCING (XATO-TOP-1000 / PROBABLE V2)\n"
         msfconsole -q -x "use auxiliary/scanner/rservices/rsh_login; set ANONYMOUS_LOGIN true; set USER_AS_PASS true; set BLANK_PASSWORDS true; set USER_FILE /usr/share/seclists/usernames/xato_top_1000_custom.txt; set PASS_FILE /usr/share/seclists/Passwords/probable-v2-top1575.txt; set RPORT $3; set RHOSTS $2; exploit; exit"
 
         echo -e "\nBRUTEFORCING VALID USERS (XATO-TOP-1000)\n"
@@ -931,7 +933,7 @@ scan(){
             fi
 
             echo -e "\nADDING PROXY\n"
-            echo "http $2 $3$flg" | sudo tee --append /etc/proxychains.conf
+            echo "http $2 $3$flg" | sudo tee --append /etc/proxychains4.conf
 
             echo -e "\nTESTING CONNECT SCAN (TOP 100 PORTS)\n"
             sudo proxychains nmap -sT -n --top-ports 100 127.0.0.1
@@ -1090,13 +1092,13 @@ techscan(){
         nikto -h $host:$port -Tuning b
 
         if [[ $scheme == "https" ]]; then
-            echo -e "\nTESTING SSL VULNERABILITIES\n"
+            echo -e "\nTESTING HEARTBLEED\n"
             if [[ $port == "443" ]]; then
                 flg=""
             else
                 flg=":$port"
             fi
-            cur=$(pwd) && cd ~/TOOLS/a2sv && python2 a2sv.py -d n -t $host$flg && cd $cur
+	    Heartbleed https://$host$flg
         fi
 }
 
@@ -1107,15 +1109,15 @@ corscan(){
 
 #Crawling/JS Scraping Function
 crawl(){
-        echo -e "\nQUERY STRINGS\n"
-        python3 ~/TOOLS/ReconSpider.py $1 &>/dev/null
-        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL 
-
         echo -e "\nALIVE URLS & SUBDOMAINS\n"
         gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep -vE "\.js$" | grep -E "\[href\]|\[code-200]|\[subdomains\]"
 
         echo -e "\nFORMS\n"
         gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep "\[form\]"
+
+        echo -e "\nQUERY STRINGS\n"
+        python3 ~/TOOLS/ReconSpider.py $1 &>/dev/null
+        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL 
 
         echo -e "\nCOMMENTS\n"
         cat results.json | jq '.comments[]'
@@ -1208,7 +1210,7 @@ dirfuzz(){
 
 bckfile(){
     echo -e "\nSEARCHING BACKUPS OF FILE \"$1\"\n"
-    bfac -u $1
+    ~/TOOLS/bfac/bfac -u $1
 }
 
 # API Endpoint Search
@@ -1321,7 +1323,7 @@ wordscan(){
     nuclei -u $1 -t github/topscoder/nuclei-wordfence-cve -tags wp-core,wp-plugin,wp-themes -rl 25 -c 5 -es info
 
     echo -e "\nSEARCHING WP-CONFIG BACKUP EXPOSURES\n"
-    bfac -u $1/wp-config --threads 3 --level 4 | grep "Response-Code: 200"
+    ~/TOOLS/bfac/bfac -u $1/wp-config --threads 3 --level 4 | grep "Response-Code: 200"
 }
 
 # Cache Poisoning common misconfigurations
@@ -1507,7 +1509,7 @@ whoiscan(){
 
 # Passive subdomain enumeratio
 subfind(){
-	echo -e "\nPASSIVE SOURCE ENUMERATION\n"
+echo -e "\nPASSIVE SOURCE ENUMERATION\n"
     chaos --update && chaos -d $1 -silent -key $chaos_key | anew -q subdomains.txt
     amass enum -passive -norecursive -noalts -d $1 | anew -q subdomains.txt
 	subfinder -d $1 -config ~/.config/subfinder/config.yml -silent | anew -q subdomains.txt
