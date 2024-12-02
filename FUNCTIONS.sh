@@ -416,9 +416,9 @@ scan(){
         fi
 
         echo -e "\nTESTING OPEN RELAYING\n"
-        msfconsole -q -x 'use auxiliary/scanner/smtp/smtp_relay; set RHOSTS {IP}; set RPORT 25; run; exit' && msfconsole -q -x "use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT $3; exploit; exit"
+        msfconsole -q -x 'use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT 25; run; exit' && msfconsole -q -x "use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT $3; exploit; exit"
 
-        echo -e "\nSEND E-MAILS VIA -> \"swaks --server $2:$3 --to victim@[DOMAIN] --from evil@[DOMAIN] --header "Subject: test" --body "[LINK]" --attach [FILE]\"\n"
+        echo -e "\nSEND E-MAILS VIA -> swaks --server $2:$3 --to victim@[DOMAIN] --from evil@[DOMAIN] --header Subject: test --body [LINK] --attach [FILE]\"\n"
     fi
 
     if [[ $1 == "whois" ]]; then
