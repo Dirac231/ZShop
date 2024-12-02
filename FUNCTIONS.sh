@@ -265,14 +265,22 @@ udp(){
     echo -e "\nUDP SERVICE SCANNING (TOP 100)\n"
     sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v --top-ports 100 -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1 -oX /tmp/$1_UDP.txt
     udp_ports=$(cat /tmp/$1_UDP.txt | xmlstarlet sel -t -v '//port[state/@state="open"]/@portid' -nl | paste -s -d, -)
-    sudo nmap -sUV -n -Pn --disable-arp-ping -g 53 -p$udp_ports -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 $1
+    if [[ ! -z $udp_ports ]]; then
+        sudo nmap -sUCV -n -Pn --disable-arp-ping -g 53 -p$udp_ports -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 $1
+    else
+        echo "NO UDP PORTS FOUND"
+    fi
     sudo rm /tmp/$1_UDP.txt
 
     echo -e "\nUDP SERVICE SCANNING (TOP 99%)\n"
     sudo nmap -sU -n -Pn --disable-arp-ping -g 53 -v --top-ports 15094 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1 -oX /tmp/$1_UDP.txt
 
     udp_ports=$(cat /tmp/$1_UDP.txt | xmlstarlet sel -t -v '//port[state/@state="open"]/@portid' -nl | paste -s -d, -)
-    sudo nmap -sUV -n -Pn --disable-arp-ping -g 53 -p$udp_ports $1
+    if [[ ! -z $udp_ports ]]; then
+        sudo nmap -sUCV -n -Pn --disable-arp-ping -g 53 -p$udp_ports -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 $1
+    else
+        echo "NO UDP PORTS FOUND"
+    fi
     sudo rm /tmp/$1_UDP.txt
 
     echo -e "\nUDP FULL BACKGROUND SCANNING\n"
@@ -632,11 +640,11 @@ scan(){
 
     if [[ $1 == "rpc" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
-	sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
+	    sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
 
-	echo -e "\nTRYING NULL/GUEST BINDINGS\n"
+	    echo -e "\nTRYING NULL/GUEST BINDINGS\n"
         rpcclient -U "" -N $2
-	rpcclient -U "%" -N $2 
+    	rpcclient -U "%" -N $2 
         rpcclient -U "Guest" -N $2
 
         echo -e "\nCHECKING IOXID INTERFACES/IPs\n"
@@ -1170,6 +1178,21 @@ searchpass(){
     sudo pass-station search $1
 }
 
+# Add/Extend Host Mappings of /etc/hosts
+addhost() {
+    ip="$1"
+    hostname="$2"
+    if grep -q "^$ip" /etc/hosts; then
+      sudo sed -i "/^$ip/s/$/ $hostname/" /etc/hosts
+      echo "[+] Appended $hostname to existing entry for $ip in /etc/hosts"
+    else
+      echo "$ip $hostname" | sudo tee -a /etc/hosts > /dev/null
+      echo "[+] Added new entry: $ip $hostname to /etc/hosts"
+    fi
+
+    grep "^$ip" /etc/hosts
+}
+
 # Content Discovery --> (Directories, Files, Backups)
 dirfuzz(){    
     echo -e "\nSEARCHING COMMON CONTENT\n"
@@ -1613,7 +1636,10 @@ alive(){
 
 # Shodan Fingerprinting (CIDR / ASN)
 fingerprint_util(){
-    echo -e "\nPASSIVE SHODAN FINGERPRINT \n"
+    echo -e "\nSERACHING VULNERABLE HOSTS\n"
+    cat $1 | nrich - | grep Vulnerabilities -B 4
+
+    echo -e "\nSEARCHING ALL CPES\n"
     cat $1 | nrich - | grep CPE -B 3
 }
 
