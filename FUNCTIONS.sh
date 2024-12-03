@@ -1106,7 +1106,7 @@ techscan(){
             else
                 flg=":$port"
             fi
-	    Heartbleed https://$host$flg
+	        Heartbleed https://$host$flg
         fi
 }
 
@@ -1125,7 +1125,7 @@ crawl(){
 
         echo -e "\nQUERY STRINGS\n"
         python3 ~/TOOLS/ReconSpider.py $1 &>/dev/null
-        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL 
+        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL
 
         echo -e "\nCOMMENTS\n"
         cat results.json | jq '.comments[]'
