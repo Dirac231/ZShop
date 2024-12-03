@@ -1634,8 +1634,8 @@ alive(){
     fi
 }
 
-# Shodan Fingerprinting (CIDR / ASN)
-fingerprint_util(){
+# Passive Shodan Fingerprinting (CIDR / ASN / FILE)
+shodscan_util(){
     echo -e "\nSERACHING VULNERABLE HOSTS\n"
     cat $1 | nrich - | grep Vulnerabilities -B 4
 
@@ -1648,24 +1648,16 @@ shodscan(){
     asn_regex='^(AS)|(as)[0-9]+$'
 
     if [[ $1 =~ $asn_regex ]]; then
-        echo -e "\nCHECKKING IPv4 ADDRESSES FROM $1\n"
-        whois -h whois.radb.net -- "-i origin $1" | grep -Eo "([0-9.]+){4}/[0-9]+" | mapcidr -silent | anew -q raw_ipv4.txt
-        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL raw_ipv4.txt | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt; rm raw_ipv4.txt
-        cat alive_ipv4.txt
-        fingerprint_util alive_ipv4.txt
+        whois -h whois.radb.net -- "-i origin $1" | grep -Eo "([0-9.]+){4}/[0-9]+" | mapcidr -silent | anew -q $1_IP.txt
+        shodscan_util $1_IP.txt
 
     elif [[ $1 =~ $cidr_regex ]]; then
-        echo -e "\nCHECKING IPv4 ADDRESSES FROM $1\n"
-        echo $1 | mapcidr -silent | anew -q raw_ipv4.txt
-        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL raw_ipv4.txt | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt; rm raw_ipv4.txt
-        cat alive_ipv4.txt
-        fingerprint_util alive_ipv4.txt
+        filename=$(echo $1 | tr -d '/')
+        echo $1 | mapcidr -silent | anew -q $filename.txt
+        shodscan_util $filename.txt
 
     else
-        echo -e "\nCHECKING IP ADDRESSES\n"
-        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 | anew -q alive_ipv4.txt
-        cat alive_ipv4.txt
-        fingerprint_util alive_ipv4.txt
+        shodscan_util $1
     fi
 }
 
