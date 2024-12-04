@@ -930,7 +930,7 @@ scan(){
 
     if [[ $1 == "squid" ]]; then
         echo -e "\nCHECKING IF PIVOTING IS POSSIBLE\n"
-        python3 ~/TOOLS/spose/spose.py --proxy http://$2:$3 --target $2
+        python3 ~/TOOLS/spose/spose.py --proxy "http://$2:$3" --target "$2"
 
         read -r conf\?"DO YOU WANT TO ADD THE PROXYCHAINS ENTRY? (Y/N): "
         if [[ $conf =~ [Yy] ]]; then
@@ -1626,21 +1626,18 @@ alive(){
     cidr_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
     if [ -f ./$1 ]; then
         echo -e "\nNMAP SWEEPING\n"
-        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5
+        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 > alive_ips.txt
 
     elif [[ $1 =~ $cidr_regex ]]; then
         echo -e "\nNMAP SWEEPING\n"
-        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 $1 | grep for | cut -d" " -f5
+        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 $1 | grep for | cut -d" " -f5 > alive_ips.txt
     fi
 }
 
 # Passive Shodan Fingerprinting (CIDR / ASN / FILE)
 shodscan_util(){
-    echo -e "\nSERACHING VULNERABLE HOSTS\n"
-    cat $1 | nrich - | grep Vulnerabilities -B 4
-
-    echo -e "\nSEARCHING ALL CPES\n"
-    cat $1 | nrich - | grep CPE -B 3
+    echo -e "\nSERACHING HOSTS\n"
+    cat $1 | nrich -
 }
 
 shodscan(){
