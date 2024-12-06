@@ -1248,10 +1248,10 @@ apifuzz(){
 # GET Parameter fuzzing
 paramfuzz(){
     nuclei -up &> /dev/null && nuclei -ut &> /dev/null
-    nuclei -u $1 -dast -t ~/.local/nuclei-templates/dast/ -rl 25 -c 5
+    nuclei -u $1 -dast -headless -t dast/ -rl 25 -c 5
 }
 
-# GET/POST Parameter discovery
+# GET/POST/Header discovery
 paramscan(){
     echo "\nX8 SEARCH (GET/POST)\n"    
     x8 -u $1 -X GET POST -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt
@@ -1533,12 +1533,12 @@ whoiscan(){
 # Passive subdomain enumeratio
 subfind(){
 echo -e "\nPASSIVE SOURCE ENUMERATION\n"
-    chaos --update && chaos -d $1 -silent -key $chaos_key | anew -q subdomains.txt
-    amass enum -passive -norecursive -noalts -d $1 | anew -q subdomains.txt
-	subfinder -d $1 -config ~/.config/subfinder/config.yml -silent | anew -q subdomains.txt
-    echo $1 | haktrails subdomains | anew -q subdomains.txt
-	assetfinder --subs-only $1 | anew -q subdomains.txt
-    findomain -quiet -t $1 | anew -q subdomains.txt; rm iet 2>/dev/null
+    chaos --update && chaos -d $1 -silent -key $chaos_key | anew -q subdomains_$1.txt
+    amass enum -passive -norecursive -noalts -d $1 | anew -q subdomains_$1.txt
+	subfinder -d $1 -config ~/.config/subfinder/config.yml -silent | anew -q subdomains_$1.txt
+    echo $1 | haktrails subdomains | anew -q subdomains_$1.txt
+	assetfinder --subs-only $1 | anew -q subdomains_$1.txt
+    findomain -quiet -t $1 | anew -q subdomains_$1.txt; rm iet 2>/dev/null
     echo -e "\nFINISHED GETTING SUBDOMAINS\n"
 }
 
@@ -1594,6 +1594,9 @@ subperm(){
 
 # Subdomain Takeover function
 takeover(){
+    echo -e "\nTESTING SUBZY TAKEOVERS\n"
+    subzy run --targets $1 --hide_fails --vuln
+
     echo -e "\nTESTING DNS TAKEOVERS\n"
     sudo service docker start
     sleep 1
@@ -1609,7 +1612,7 @@ webprobe(){
     mkdir WEB_SCAN && cd WEB_SCAN && cp ../$1 .
 
     echo -e "\nWEB PORT SCANNING\n"
-    sudo unimap --fast-scan -f $1 --ports $COMMON_PORTS_WEB -q -k --url-output > web_unimap_scan
+    sudo /home/kali/.local/bin/unimap --fast-scan -f $1 --ports $COMMON_PORTS_WEB -q -k --url-output > web_unimap_scan
     rm -rf unimap_logs
 
     echo -e "\nFILTERING ALIVE APPLICATIONS\n"
