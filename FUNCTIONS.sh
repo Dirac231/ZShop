@@ -1450,7 +1450,7 @@ paramine(){
 
     echo -e "\nFUZZING PARAMETERS\n"
     nuclei -up &> /dev/null && nuclei -ut &> /dev/null
-    nuclei -ss host-spray -l $(echo $1 | unfurl format %d)_params.txt -dast -t ~/.local/nuclei-templates/dast/ -rl 25 -c 5 -v
+    nuclei -ss host-spray -l $(echo $1 | unfurl format %d)_params.txt -dast -headless -t dast/ -rl 25 -c 5 -v
 }
 
 # Google fingerprinting for a root domain
