@@ -1287,6 +1287,12 @@ guidcheck(){
     guidtool -i $1
 }
 
+# Joomla Scanning Function
+joomscan(){
+    echo -e "\nSCANNING JOOMLA INSTANCE \"$1\"\n"
+    cur=$(pwd) && cd ~/TOOLS/joomscan && perl joomscan.pl --update && perl joomscan -u $1 -ec && cd $cur
+}
+
 # Wordpress scanning function
 wordscan(){
     echo -e "\nENUMERATING COMPONENTS VIA WPSCAN\n"
