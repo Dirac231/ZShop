@@ -640,9 +640,9 @@ scan(){
 
     if [[ $1 == "rpc" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
-	    sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
+	sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
 
-	    echo -e "\nTRYING NULL/GUEST BINDINGS\n"
+	echo -e "\nTRYING NULL/GUEST BINDINGS\n"
         rpcclient -U "" -N $2
     	rpcclient -U "%" -N $2 
         rpcclient -U "Guest" -N $2
