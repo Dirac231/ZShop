@@ -258,7 +258,7 @@ tcp(){
     sudo nmap -sSCV -n -Pn --disable-arp-ping -g 53 -v --top-ports 3328 -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1
 
     echo -e "\nTCP FULL BACKGROUND SCANNING\n"
-    sudo nmap -sS -n -Pn --disable-arp-ping -g 53 -v -p- -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1
+    sudo nmap -sSCV -n -Pn --disable-arp-ping -g 53 -v -p- -T4 --min-rate=250 --max-rtt-timeout 150ms --max-retries 2 --open $1
 }
 
 udp(){
@@ -644,7 +644,7 @@ scan(){
 
 	echo -e "\nTRYING NULL/GUEST BINDINGS\n"
         rpcclient -U "" -N $2
-    	rpcclient -U "%" -N $2 
+    	rpcclient -U "%" -N $2
         rpcclient -U "Guest" -N $2
 
         echo -e "\nCHECKING IOXID INTERFACES/IPs\n"
@@ -1644,26 +1644,28 @@ alive(){
 }
 
 # Passive Shodan Fingerprinting (CIDR / ASN / FILE)
-shodscan_util(){
-    echo -e "\nSERACHING HOSTS\n"
-    cat $1 | nrich -
-}
-
 shodscan(){
     cidr_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
     asn_regex='^(AS)|(as)[0-9]+$'
 
     if [[ $1 =~ $asn_regex ]]; then
+        echo -e "\nDISPLAYING SHODAN STATISTICS\n"
+        hackstat "asn:$1"
         whois -h whois.radb.net -- "-i origin $1" | grep -Eo "([0-9.]+){4}/[0-9]+" | mapcidr -silent | anew -q $1_IP.txt
-        shodscan_util $1_IP.txt
+        cat $1_IPS.txt | nrich -
 
     elif [[ $1 =~ $cidr_regex ]]; then
+        echo -e "\nDISPLAYING SHODAN STATISTICS\n"
+        hackstat "net:$1"
+
+        echo -e "\nDISPLAYING HOSTS INFORMATION\n"
         filename=$(echo $1 | tr -d '/')
         echo $1 | mapcidr -silent | anew -q $filename.txt
-        shodscan_util $filename.txt
+        cat $filename.txt | nrich - 
 
     else
-        shodscan_util $1
+        echo -e "\nDISPLAYING HOSTS INFORMATION\n"
+        cat $1 | nrich - 
     fi
 }
 
