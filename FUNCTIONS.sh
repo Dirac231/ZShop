@@ -424,7 +424,7 @@ scan(){
         fi
 
         echo -e "\nTESTING OPEN RELAYING\n"
-        msfconsole -q -x 'use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT 25; run; exit' && msfconsole -q -x "use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT $3; exploit; exit"
+        msfconsole -q -x "use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT 25; run; exit" && msfconsole -q -x "use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT $3; exploit; exit"
 
         echo -e "\nSEND E-MAILS VIA -> swaks --server $2:$3 --to victim@[DOMAIN] --from evil@[DOMAIN] --header Subject: test --body [LINK] --attach [FILE]\"\n"
     fi
@@ -640,9 +640,9 @@ scan(){
 
     if [[ $1 == "rpc" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
-	sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
+	    sudo nmap -n -Pn -sV -p$3 --script="msrpc-enum" $2
 
-	echo -e "\nTRYING NULL/GUEST BINDINGS\n"
+	    echo -e "\nTRYING NULL/GUEST BINDINGS\n"
         rpcclient -U "" -N $2
     	rpcclient -U "%" -N $2
         rpcclient -U "Guest" -N $2
@@ -1118,14 +1118,14 @@ corscan(){
 #Crawling/JS Scraping Function
 crawl(){
         echo -e "\nALIVE URLS & SUBDOMAINS\n"
-        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep -vE "\.js$" | grep -E "\[href\]|\[code-200]|\[subdomains\]"
+        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep -vE "\.js$" | grep -E "\[href\]|\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)" | uniq
 
         echo -e "\nFORMS\n"
-        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep "\[form\]"
+        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep "\[form\]" | grep "$(echo $1 | unfurl format %d)" | uniq
 
         echo -e "\nQUERY STRINGS\n"
         python3 ~/TOOLS/ReconSpider.py $1 &>/dev/null
-        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL
+        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL | grep "$(echo $1 | unfurl format %d)" | uniq
 
         echo -e "\nCOMMENTS\n"
         cat results.json | jq '.comments[]'
@@ -1399,9 +1399,9 @@ crscan(){
 xsscan(){
     read -r xsscookie\?"INPUT COOKIE HEADER IF NEEDED: "
     if [[ -z $xsscookie ]]; then
-        wingman -u $1 --crawl
+        wingman -u $1 --crawl --exclude dom,path
     else
-        wingman -u $1 --crawl -h "$xsscookie"
+        wingman -u $1 --crawl -h "$xsscookie" --exclude dom,path
     fi
 }
 
@@ -1661,11 +1661,11 @@ shodscan(){
         echo -e "\nDISPLAYING HOSTS INFORMATION\n"
         filename=$(echo $1 | tr -d '/')
         echo $1 | mapcidr -silent | anew -q $filename.txt
-        cat $filename.txt | nrich - 
+        cat $filename.txt | nrich -
 
     else
         echo -e "\nDISPLAYING HOSTS INFORMATION\n"
-        cat $1 | nrich - 
+        cat $1 | nrich -
     fi
 }
 
