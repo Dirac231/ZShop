@@ -1196,16 +1196,16 @@ addhost() {
 # Content Discovery --> (Directories, Files, Backups)
 dirfuzz(){    
     echo -e "\nSEARCHING COMMON CONTENT\n"
-    ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
-    ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/dirsearch.txt -v
-    ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
-    ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/dirsearch.txt -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
 
     echo -e "\nSEARCHING RAFT DIRECTORIES\n"
-    ffuf -ac -acs advanced -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
 
     echo -e "\nSEARCHING RAFT FILES\n"
-    ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
 
     echo -e "\nCHECKING NUCLEI HTTP EXPOSURES\n"    
     nuclei -up &>/dev/null && nuclei -ut &>/dev/null
@@ -1215,20 +1215,20 @@ dirfuzz(){
     if [[ ! -z $cel ]]; then
         echo -e "\nGENERATED FUZZING\n"
         cewl $cel -d 4 -m 3 --lowercase --with-numbers --convert-umlauts -w /tmp/$(echo $1 | unfurl format %d).txt
-        ffuf -ac -acs advanced -u $1/FUZZ/ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
+        ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
         rm /tmp/$(echo $1 | unfurl format %d).txt
     fi
 
     echo -e "\nBIGGER DIRECTORY SEARCH\n"
-    ffuf -ac -acs advanced -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
 
     read -r resp\?"INPUT EXTENSION FOR BACKEND & BACKUP FUZZING: "
     if [[ ! -z $resp ]]; then
-        ffuf -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -e $resp,$resp.old,$resp.bak,$resp.tmp,$resp~,old,bak,tmp -v
+        ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -e $resp,$resp.old,$resp.bak,$resp.tmp,$resp~,old,bak,tmp -v
     fi
 
     echo -e "\nSEARCHING ALL WEB EXTENSIONS\n"
-    ffuf -ac -acs advanced -u $1/FUF1FUF2 -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt:FUF1 -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUF2 -v
+    ffuf -ac -acs advanced -r  -u $1/FUF1FUF2 -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt:FUF1 -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUF2 -v
 }
 
 bckfile(){
