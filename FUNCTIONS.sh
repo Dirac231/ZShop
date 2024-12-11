@@ -621,7 +621,7 @@ scan(){
             onesixtyone -p $3 -c /usr/share/seclists/Discovery/SNMP/snmp-onesixtyone.txt $2
             echo ""; read -r com_string\?"INPUT A VALID COMMUNITY STRING (CTRL-C IF NONE): "
 
-            echo -e "\nDUMPING PARSED MIB TREE IN \"$2_SNMPCHECK.txt\" -> CHECK INTERESTING PROCESS STRINGS!\n"
+            echo -e "\nDUMPING PARSED MIB TREE IN \"$2_SNMPCHECK.txt\""
             snmp-check -v $snmp_ver -p $3 -d -c $com_string $2 > $2_SNMPCHECK.txt
 
             echo -e "\nDUMPING MIB STRINGS IN \"$2_SNMPWALK.txt\"\n"
@@ -1593,24 +1593,24 @@ subperm(){
 
     echo -e "\nSEARCHING PERMUTATION DOMAINS\n"
     gotator -sub $1 -perm dns_permutations_list.txt -depth 1 -numbers 10 -mindup -adv -md | sort -u > sub_perms.txt
-    
+
     echo -e "\nRESOLVING PERMUTED DOMAINS\n"
     puredns resolve ~/WORDLISTS/permutations.txt -r ~/WORDLISTS/public_resolvers.txt sub_perms.txt > permuted_resolved.txt; rm sub_perms.txt
 }
 
 # Subdomain Takeover function
 takeover(){
-    echo -e "\nTESTING SUBZY TAKEOVERS\n"
-    subzy run --targets $1 --hide_fails --vuln
+    echo -e "\nTESTING NUCLEI TAKEOVERS\n"
+    nuclei -up >/dev/null && nuclei -ut >/dev/null
+    nuclei -l $1 -t http/takeovers -rl 25 -c 5
 
     echo -e "\nTESTING DNS TAKEOVERS\n"
     sudo service docker start
     sleep 1
     sudo docker run -it --rm -v $(pwd):/etc/dnsreaper punksecurity/dnsreaper file --filename /etc/dnsreaper/$1
 
-    echo -e "\nTESTING NUCLEI TAKEOVERS\n"
-    nuclei -up >/dev/null && nuclei -ut >/dev/null
-    nuclei -l $1 -ss host-spray -silent -t http/takeovers -rl 25 -c 5
+    echo -e "\nTESTING SUBZY TAKEOVERS\n"
+    subzy run --targets $1 --hide_fails --vuln
 }
 
 # Web application probing on resolved domains
