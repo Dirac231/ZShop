@@ -407,7 +407,6 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/vmware/vmauthd_version; set RHOSTS $2; set RPORT $3; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/vmware/vmware_server_dir_trav; set RHOSTS $2; set RPORT $3; exploit; exit"     
         msfconsole -q -x "use auxiliary/scanner/vmware/vmware_update_manager_traversal; set RHOSTS $2; set RPORT $3; exploit; exit"
-   
     fi
 
     if [[ $1 == "smtp" ]]; then
