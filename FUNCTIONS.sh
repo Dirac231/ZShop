@@ -1117,7 +1117,7 @@ corscan(){
 #Crawling/JS Scraping Function
 crawl(){
         echo -e "\nALIVE URLS & SUBDOMAINS\n"
-        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep -vE "\.js$" | grep -E "\[href\]|\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)" | uniq
+        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep -vE "\.js$" | grep -E "\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)" | uniq
 
         echo -e "\nFORMS\n"
         gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep "\[form\]" | grep "$(echo $1 | unfurl format %d)" | uniq
@@ -1126,14 +1126,15 @@ crawl(){
         python3 ~/TOOLS/ReconSpider.py $1 &>/dev/null
         cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL | grep "$(echo $1 | unfurl format %d)" | uniq
 
+        echo -e "\nJS FILES\n"
+        cat results.json | jq '.js_files[]'
+
         echo -e "\nCOMMENTS\n"
         cat results.json | jq '.comments[]'
 
         echo -e "\nEMAILS\n"
         cat results.json | jq '.emails[]'
         rm results.json
-
-        jsmine $1
 
         echo -e "\nSEARCHING BROKEN LINK REFERENCES\n"
         blc $1 -ro --filter-level 2 --exclude-internal
