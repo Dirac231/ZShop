@@ -417,10 +417,12 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/smtp/smtp_version; set RHOSTS $2; set RPORT $3; exploit; exit"
 
         read -r mtd\?"INPUT METHOD FOR USER BRUTEFORCING (BLANK TO SKIP): "
-        if [[ ! -z $mtd ]]; then
-            echo -e "\nBRUTEFORCING USERNAMES (Names)\n"
-            smtp-user-enum -M $mtd -U /usr/share/seclists/Usernames/Names/names.txt -t $2 -p $3 -w 15
-        fi
+        read -r dom\?"INPUT A DOMAIN IF PRESENT: "
+        if [[ ! -z $dom ]]; then
+            smtp-user-enum -M $mtd -U /usr/share/seclists/Usernames/Names/names.txt -t $1 -p $2 -w 15 -D $dom
+        else
+            smtp-user-enum -M $mtd -U /usr/share/seclists/Usernames/Names/names.txt -t $1 -p $2 -w 15
+        fi 
 
         echo -e "\nTESTING OPEN RELAYING\n"
         msfconsole -q -x "use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT 25; run; exit" && msfconsole -q -x "use auxiliary/scanner/smtp/smtp_relay; set RHOSTS $2; set RPORT $3; exploit; exit"
