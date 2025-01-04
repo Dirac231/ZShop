@@ -322,7 +322,7 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/ftp/colorado_ftp_traversal; set RHOSTS $2; set RPORT $3; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/ftp/titanftp_xcrc_traversal; set RHOSTS $2; set RPORT $3; exploit; exit"
     fi
-
+    
     if [[ $1 == "dns" ]]; then
         echo -e "\nNMAP ENUMERATION / RECURSION CHECK\n"
         sudo nmap -Pn -sUV -n --script "(default and *dns*) or fcrdns or dns-random-txid or dns-random-srcport" -p$3 $2
@@ -333,31 +333,33 @@ scan(){
         echo -e "\nNSLOOKUP LOCALHOST/IP QUERIES\n"
         echo "SERVER $2\n127.0.0.1\nlocalhost\n$2\nexit" | nslookup
 
-        read -r dnsdom\?"INPUT A DOMAIN TO ENUMERATE (BLANK TO SKIP): "
-        if [[ ! -z $dnsdom ]]; then
-            echo -e "\nNMAP SRV-ENUM RECORDS\n"
-            sudo nmap -Pn -n -sUV -p$3 --script dns-srv-enum --script-args dns-srv-enum.domain=$dnsdom $2
+	while true; do
+        	read -r dnsdom\?"INPUT A DOMAIN TO ENUMERATE (CTRL-C TO TERMINATE): "
+        	if [[ ! -z $dnsdom ]]; then
+            		echo -e "\nNMAP SRV-ENUM RECORDS\n"
+            		sudo nmap -Pn -n -sUV -p$3 --script dns-srv-enum --script-args dns-srv-enum.domain=$dnsdom $2
 
-            echo -e "\nGETTING ALL RECORDS FOR \"$dnsdom\"\n"
-            dig any $dnsdom @$2 -p $3 | grep "$dnsdom\." --color=never
+            		echo -e "\nREQUESTING ALL DNS RECORDS FOR \"$dnsdom\"\n"
+            		dig any $dnsdom @$2 -p $3 | grep "$dnsdom\." --color=never
 
-            echo -e "\nQUERYING DOMAIN WITH NSLOOKUP\n"
-            echo "SERVER $2\n$dnsdom\nexit" | nslookup
+	    		echo -e "\nCHECKING ZONE TRANSFER\n"
+	    		dig axfr $dnsdom @$2 -p $3
 
-            echo -e "\nFINDING DC IP FOR THE DOMAIN\n"
-            nslookup -type=SRV _ldap._tcp.dc._msdcs.$dnsdom $2
+        		read -r resp\?"DO YOU WANT TO BRUTEFORCE SUBDOMAINS? (Y/N): "
+        		if [[ $resp =~ [Yy] ]]; then
+	   	 		echo -e "\nBRUTEFORCING SUBDOMAINS (TOP-110000)\n"
+	    			cur=$(pwd) && cd ~/TOOLS/subbrute && echo $2 > res.txt && python3 subbrute.py $dnsdom -s /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -r res.txt && cd $cur
+        		fi
 
-            echo -e "\nRECUSRIVE TRANSFER AND BRUTEFORCING (TOP-110000)\n"
-            dnsenum --dnsserver $2 --enum -p 0 -s 0 -r -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt $dnsdom
-
-            echo -e "\nCHECKING INTERNAL PTR RECORDS\n"
-            dnsrecon -r 127.0.0.0/24 -n $2 -d $dnsdom
-            dnsrecon -r 127.0.1.0/24 -n $2 -d $dnsdom
-            dnsrecon -r 192.168.0.1/24 -n $2 -d $dnsdom
-            dnsrecon -r 172.16.0.1/24 -n $2 -d $dnsdom
-            dnsrecon -r 10.0.0.1/24 -n $2 -d $dnsdom
-            dnsrecon -r $2/24 -n $2 -d $dnsdom
-        fi
+            		echo -e "\nCHECKING INTERNAL PTR RECORDS\n"
+            		dnsrecon -r 127.0.0.0/24 -n $2 -d $dnsdom
+            		dnsrecon -r 127.0.1.0/24 -n $2 -d $dnsdom
+            		dnsrecon -r 192.168.0.1/24 -n $2 -d $dnsdom
+            		dnsrecon -r 172.16.0.1/24 -n $2 -d $dnsdom
+            		dnsrecon -r 10.0.0.1/24 -n $2 -d $dnsdom
+            		dnsrecon -r $2/24 -n $2 -d $dnsdom
+        	fi
+	done
 
         echo -e "\nMSF ENUMERATION\n"
         msfconsole -q -x "use auxiliary/scanner/dns/dns_amp; set RHOSTS $2; set RPORT $3; exploit; exit"
