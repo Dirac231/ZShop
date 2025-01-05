@@ -390,19 +390,19 @@ scan(){
 
                         echo -e "\nREQUESTING \"A / AAAA\" RECORDS FOR \"$dnsdom\" OVER ALL ZONES\n"
                         while read zone; do
-                            dig a $dnsdom @$2 -p $3 +short
-                            dig aaaa $dnsdom @$2 -p $3 +short
+                            dig a $dnsdom @$zone -p $3 +short
+                            dig aaaa $dnsdom @$zone -p $3 +short
                         done < /tmp/ns_$dnsdom.txt
 
                         echo -e "\nREQUESTING \"MX / TXT\" RECORDS FOR \"$dnsdom\" OVER ALL ZONES\n"
                         while read zone; do
-                            dig mx $dnsdom @$2 -p $3 +short
-                            dig txt $dnsdom @$2 -p $3 +short
+                            dig mx $dnsdom @$zone -p $3 +short
+                            dig txt $dnsdom @$zone -p $3 +short
                         done < /tmp/ns_$dnsdom.txt
 
                         echo -e "\nREQUESTING \"CNAME\" RECORDS FOR \"$dnsdom\" OVER ALL ZONES\n"
                         while read zone; do
-                            dig cname $dnsdom @$2 -p $3 +short
+                            dig cname $dnsdom @$zone -p $3 +short
                         done < /tmp/ns_$dnsdom.txt
 
                         echo -e "\nATTEMPTING ZONE TRANSFER OVER ALL ZONES\n"
