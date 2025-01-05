@@ -322,44 +322,112 @@ scan(){
         msfconsole -q -x "use auxiliary/scanner/ftp/colorado_ftp_traversal; set RHOSTS $2; set RPORT $3; exploit; exit"
         msfconsole -q -x "use auxiliary/scanner/ftp/titanftp_xcrc_traversal; set RHOSTS $2; set RPORT $3; exploit; exit"
     fi
-    
+
     if [[ $1 == "dns" ]]; then
         echo -e "\nNMAP ENUMERATION / RECURSION CHECK\n"
-        sudo nmap -Pn -sUV -n --script "(default and *dns*) or fcrdns or dns-random-txid or dns-random-srcport" -p$3 $2
+        sudo nmap -Pn -sUV -n --script "(default and *dns*) or dns-nsid or fcrdns or dns-random-txid or dns-random-srcport" -p$3 $2
 
         echo -e "\nGETTING VERSION BIND\n"
         dig +short version.bind CHAOS TXT @$2 -p $3
 
-        echo -e "\nNSLOOKUP LOCALHOST/IP QUERIES\n"
-        echo "SERVER $2\n127.0.0.1\nlocalhost\n$2\nexit" | nslookup
+        echo -e "\nNSLOOKUP LOCALHOST/DNS IP QUERIES\n"
+        echo "SERVER $2\n127.0.0.1\n$2" | nslookup
 
-	while true; do
-        	read -r dnsdom\?"INPUT A DOMAIN TO ENUMERATE (CTRL-C TO TERMINATE): "
+        read -r ad_resp\?"IS THE DNS SERVER HANDLING AN ACTIVE DIRECTORY? (Y/N): "
+
+	    while true; do
+        	read -r dnsdom\?"INPUT A DOMAIN TO ENUMERATE (CTRL-C TO EXIT): "
         	if [[ ! -z $dnsdom ]]; then
-            		echo -e "\nNMAP SRV-ENUM RECORDS\n"
-            		sudo nmap -Pn -n -sUV -p$3 --script dns-srv-enum --script-args dns-srv-enum.domain=$dnsdom $2
+                    rm /tmp/ns_$dnsdom.txt /tmp/zones_$dnsdom.txt &>/dev/null
+                    if [[ $ad_resp =~ [Yy] ]]; then
+                        echo -e "\nCHECKING AD RECORDS WITH DIG\n"
+                        dig -t _gc._tcp.lab.$dnsdom @$2 -p$3
+                        dig -t _ldap._tcp.lab.$dnsdom @$2 -p$3
+                        dig -t _kerberos._tcp.lab.$dnsdom @$2 -p$3
+                        dig -t _kpasswd._tcp.lab.$dnsdom @$2 -p $3
 
-            		echo -e "\nREQUESTING ALL DNS RECORDS FOR \"$dnsdom\"\n"
-            		dig any $dnsdom @$2 -p $3 | grep "$dnsdom\." --color=never
+                        echo -e "\nCHECKING NMAP SRV-ENUM (AD SERVERS)\n"
+            		    sudo nmap -Pn -n -sUV -p$3 --script dns-srv-enum --script-args dns-srv-enum.domain=$dnsdom $2
+                    fi
 
-	    		echo -e "\nCHECKING ZONE TRANSFER\n"
-	    		dig axfr $dnsdom @$2 -p $3
+                    echo -e "\nREQUESTING \"NS\" RECORDS FOR \"$dnsdom\"\n"
+                    ns_records=$(dig ns $dnsdom @$2 -p $3 +short) && echo $ns_records
+                    ref_chk=$(dig ns $dnsdom @$2 -p $3 | grep REFUSED)
 
-        		read -r resp\?"DO YOU WANT TO BRUTEFORCE SUBDOMAINS? (Y/N): "
-        		if [[ $resp =~ [Yy] ]]; then
-	   	 		echo -e "\nBRUTEFORCING SUBDOMAINS (TOP-110000)\n"
-	    			cur=$(pwd) && cd ~/TOOLS/subbrute && echo $2 > res.txt && python3 subbrute.py $dnsdom -s /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -r res.txt && cd $cur
-        		fi
+                    if [[ ! -z $ref_chk || -z $ns_records ]]; then
+                        echo -e "\nREQUESTING \"A / AAAA\" RECORDS FOR \"$dnsdom\" OVER DNS IP\n"
+                        dig a $dnsdom @$2 -p $3 +short
+                        dig aaaa $dnsdom @$2 -p $3 +short
 
-            		echo -e "\nCHECKING INTERNAL PTR RECORDS\n"
-            		dnsrecon -r 127.0.0.0/24 -n $2 -d $dnsdom
-            		dnsrecon -r 127.0.1.0/24 -n $2 -d $dnsdom
-            		dnsrecon -r 192.168.0.1/24 -n $2 -d $dnsdom
-            		dnsrecon -r 172.16.0.1/24 -n $2 -d $dnsdom
-            		dnsrecon -r 10.0.0.1/24 -n $2 -d $dnsdom
-            		dnsrecon -r $2/24 -n $2 -d $dnsdom
+                        echo -e "\nREQUESTING \"MX / TXT\" RECORDS FOR \"$dnsdom\" OVER DNS IP\n"
+                        dig mx $dnsdom @$2 -p $3 +short
+                        dig txt $dnsdom @$2 -p $3 +short
+
+                        echo -e "\nREQUESTING \"CNAME\" RECORDS FOR \"$dnsdom\" OVER DNS IP\n"
+                        dig cname $dnsdom @$2 -p $3 +short
+
+                        if [[ ! -z $ns_records ]]; then
+                            echo -e "NS REQUEST WAS REFUSED, ATTEMPTING ZONE TRANSFER OVER DNS IP\n"
+                            axfr_resp=$(dig axfr $dnsdom @$2 -p $3 | grep $dnsdom --color=never | tail -n +2)
+
+                            if [[ -z $axfr_resp ]]; then
+                                echo -e "\nZONE TRANSFER FAILED, BRUTEFORCING DOMAINS (TOP-110000)\n"
+                                echo $2 > /tmp/ns_$dnsdom.txt
+                                cur=$(pwd) && cd ~/TOOLS/subbrute
+                                python2 subbrute.py $dnsdom -s /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -r /tmp/ns_$dnsdom.txt
+                                cd $cur
+                            else
+                                echo $axfr_resp
+                            fi
+                        fi
+                    fi
+
+                    if [[ ! -z $ns_records && -z $ref_chk ]]; then
+                        echo $ns_records > /tmp/zones_$dnsdom.txt && touch /tmp/ns_$dnsdom.txt
+                        while read zone; do
+                            ip_chk=$(dig a ${zone%.} @$2 +short)
+                            if [[ $ip_chk == "127.0.0.1" || -z $ip_chk ]]; then 
+                                echo $2 >> /tmp/ns_$dnsdom.txt
+                            else
+                                echo $ip_chk >> /tmp/ns_$dnsdom.txt
+                            fi
+                        done < /tmp/zones_$dnsdom.txt
+                        cat /tmp/ns_$dnsdom.txt | sort -u > /tmp/tmp_ns_$dnsdom.txt && mv /tmp/tmp_ns_$dnsdom.txt /tmp/ns_$dnsdom.txt
+
+                        echo -e "\nREQUESTING \"A / AAAA\" RECORDS FOR \"$dnsdom\" OVER ALL ZONES\n"
+                        while read zone; do
+                            dig a $dnsdom @$2 -p $3 +short
+                            dig aaaa $dnsdom @$2 -p $3 +short
+                        done < /tmp/ns_$dnsdom.txt
+
+                        echo -e "\nREQUESTING \"MX / TXT\" RECORDS FOR \"$dnsdom\" OVER ALL ZONES\n"
+                        while read zone; do
+                            dig mx $dnsdom @$2 -p $3 +short
+                            dig txt $dnsdom @$2 -p $3 +short
+                        done < /tmp/ns_$dnsdom.txt
+
+                        echo -e "\nREQUESTING \"CNAME\" RECORDS FOR \"$dnsdom\" OVER ALL ZONES\n"
+                        while read zone; do
+                            dig cname $dnsdom @$2 -p $3 +short
+                        done < /tmp/ns_$dnsdom.txt
+
+                        echo -e "\nATTEMPTING ZONE TRANSFER OVER ALL ZONES\n"
+                        while read zone; do
+                            axfr_resp=$(dig axfr $dnsdom @$zone -p $3 | grep $dnsdom --color=never | tail -n +2)
+                            if [[ ! -z $axfr_resp ]]; then
+                                echo $axfr_resp
+                                break
+                            fi
+                        done < /tmp/ns_$dnsdom.txt
+                        if [[ -z $axfr_resp ]]; then
+                            echo -e "\nZONE TRANSFER FAILED, BRUTEFORCING DOMAINS (TOP-110000)\n"
+                            cur=$(pwd) && cd ~/TOOLS/subbrute
+                            python2 subbrute.py $dnsdom -s /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -r /tmp/ns_$dnsdom.txt
+                            cd $cur
+                        fi
+                    fi
         	fi
-	done
+	    done
 
         echo -e "\nMSF ENUMERATION\n"
         msfconsole -q -x "use auxiliary/scanner/dns/dns_amp; set RHOSTS $2; set RPORT $3; exploit; exit"
