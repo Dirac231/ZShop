@@ -327,12 +327,6 @@ scan(){
         echo -e "\nNMAP ENUMERATION / RECURSION CHECK\n"
         sudo nmap -Pn -sUV -n --script "(default and *dns*) or dns-nsid or fcrdns or dns-random-txid or dns-random-srcport" -p$3 $2
 
-        echo -e "\nGETTING VERSION BIND\n"
-        dig +short version.bind CHAOS TXT @$2 -p $3
-
-        echo -e "\nNSLOOKUP LOCALHOST/DNS IP QUERIES\n"
-        echo "SERVER $2\n127.0.0.1\n$2" | nslookup
-
         read -r ad_resp\?"IS THE DNS SERVER HANDLING AN ACTIVE DIRECTORY? (Y/N): "
 
 	    while true; do
@@ -346,7 +340,7 @@ scan(){
                         dig -t _kerberos._tcp.lab.$dnsdom @$2 -p$3
                         dig -t _kpasswd._tcp.lab.$dnsdom @$2 -p $3
 
-                        echo -e "\nCHECKING NMAP SRV-ENUM (AD SERVERS)\n"
+                        echo -e "\nCHECKING NMAP SRV-ENUM RECORDS\n"
             		    sudo nmap -Pn -n -sUV -p$3 --script dns-srv-enum --script-args dns-srv-enum.domain=$dnsdom $2
                     fi
 
