@@ -324,7 +324,7 @@ scan(){
     fi
 
     if [[ $1 == "dns" ]]; then
-        echo -e "\nNMAP ENUMERATION / RECURSION CHECK\n"
+        echo -e "\nNMAP BANNER / RECURSION CHECK\n"
         sudo nmap -Pn -sUV -n --script "(default and *dns*) or dns-nsid or fcrdns or dns-random-txid or dns-random-srcport" -p$3 $2
 
         read -r ad_resp\?"IS THE DNS SERVER HANDLING AN ACTIVE DIRECTORY? (Y/N): "
