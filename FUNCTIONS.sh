@@ -1735,6 +1735,24 @@ shodscan(){
     fi
 }
 
+# Active Fingerprinting (CIDR / FILE)
+fingerprint(){
+    cidr_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
+    if [[ $1 =~ $cidr_regex ]]; then
+        echo -e "\nTCP TOP-1000 SCAN\n"
+        sudo masscan $1 --top-ports 100
+
+        echo -e "\nUDPX FINGERPRINT\n"
+        udpx -t $1 -c 128 -w 1000
+    else
+        echo -e "\nTCP TOP-100 SCAN\n"
+        sudo masscan -iL $1 --top-ports 100
+
+        echo -e "\nUDPX FINGERPRINT\n"
+        udpx -tf $1 -c 128
+    fi
+}
+
 # Host Mapping Search -> Using https://wordlists-cdn.assetnote.io/data/technologies
 hostmap() {
     local search_string="$1"
