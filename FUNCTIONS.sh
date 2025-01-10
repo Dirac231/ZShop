@@ -1701,11 +1701,14 @@ alive(){
     cidr_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
     if [ -f ./$1 ]; then
         echo -e "\nNMAP SWEEPING\n"
-        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 > alive_ips.txt
+        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 -iL $1 | grep for | cut -d" " -f5 > alive_ips.txt && cat alive_ips.txt
 
     elif [[ $1 =~ $cidr_regex ]]; then
+    	echo -e "\nFPING SWEEPING\n"
+	    fping -asgq $1
+
         echo -e "\nNMAP SWEEPING\n"
-        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 $1 | grep for | cut -d" " -f5 > alive_ips.txt
+        sudo nmap -n -sn -PE -PP -PM -PS21,22,23,25,80,113,443,31339 -PA80,113,443,10042 -g 53 $1 | grep for | cut -d" " -f5 > alive_ips.txt && cat alive_ips.txt
     fi
 }
 
