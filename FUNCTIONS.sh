@@ -765,7 +765,8 @@ scan(){
         echo -e "\nNMAP SCANNING\n" 
         sudo nmap -n -Pn -sV --script "ldap-* and not brute" -p$3 $2
         
-        echo -e "\nTESTING NULL BIND\n"
+        echo -e "\nTESTING NULL BINDS\n"
+        nxc ldap $2 --port $3 -u '' -p ''
         ldapsearch -H ldap://$2:$3 -x -s base namingcontexts
     fi
 
@@ -781,7 +782,7 @@ scan(){
 
     if [[ $1 == "afp" ]]; then
         echo -e "\nNMAP ENUMERATION\n"
-        sudo nmap -n -Pn -sV --script="afp-* and not dos and not brute"
+        sudo nmap -n -Pn -sV --script="afp-* and not dos and not brute" -p$3 $2
     
         echo -e "\nMSF ENUMERATION\n"
         msfconsole -q -x "use auxiliary/scanner/afp/afp_server_info; set RHOSTS $2; set RPORT $3; exploit; exit"
@@ -797,7 +798,7 @@ scan(){
         nxc smb $2 -u '' -p '' --local-auth --port $3
         nxc smb $2 -u 'Guest' -p '' --local-auth --port $3
 
-        read -r resp\?"DO YOU WANT TO TEST SMBCLIENT NULL/GUEST BINDINGS? (Y/N): "
+        read -r resp\?"DO YOU WANT TO TEST SMBCLIENT BINDINGS? (Y/N): "
         if [[ $resp =~ [Yy] ]]; then
             echo -e "\nSTANDARD CHECK\n"
             smbclient -p $3 -N -L $2
