@@ -797,7 +797,7 @@ scan(){
         nxc smb $2 -u '' -p '' --local-auth --port $3
         nxc smb $2 -u 'Guest' -p '' --local-auth --port $3
 
-        read -r resp\?"DO YOU WANT TO TEST SMBCLIENT BINDINGS? (Y/N): "
+        read -r resp\?"DO YOU WANT TO TEST SMBCLIENT NULL/GUEST BINDINGS? (Y/N): "
         if [[ $resp =~ [Yy] ]]; then
             echo -e "\nSTANDARD CHECK\n"
             smbclient -p $3 -N -L $2
@@ -810,10 +810,11 @@ scan(){
             echo -e "\nNT1 CHECK\n"
             smbclient -p $3 -N -L $2 --option="client min protocol=NT1"
             smbclient -p $3 -U 'Guest%' -L $2 --option="client min protocol=NT1"
-        fi
 
-        echo -e "\nTESTING DEFAULT CREDENTIALS\n"
-        hydra -V -t 8 -e nsr -f -C /usr/share/seclists/Passwords/Default-Credentials/smb-betterdefaultpasslist.txt $1://$2:$3
+            echo -e "\nSMB2 CHECK\n"
+            smbclient -p $3 -N -L $2 --option="client min protocol=SMB2"
+            smbclient -p $3 -U 'Guest%' -L $2 --option="client min protocol=SMB2"
+        fi
 
         echo -e "\nMSF VERSION FINGERPRINT\n"
         msfconsole -q -x "use auxiliary/scanner/smb/smb_version; set RHOSTS $2; set RPORT $3; exploit; exit" 
@@ -1182,18 +1183,18 @@ corscan(){
 
 #Crawling/JS Scraping Function
 crawl(){
-        echo -e "\nALIVE URLS & SUBDOMAINS\n"
-        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep -vE "\.js$" | grep -E "\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)" | uniq
+        echo -e "\n200-URLS / SUBDOMAINS\n"
+        gospider -t 25 -s $1 --sitemap -d 2 --subs | grep -vE "\.js$|\.js\?" | grep -E "\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)"
 
-        echo -e "\nFORMS\n"
-        gospider -t 25 --js false -s $1 --sitemap -d 2 --subs | grep "\[form\]" | grep "$(echo $1 | unfurl format %d)" | uniq
+        echo -e "\nJS FILES & ENDPOINTS\n"
+        gospider -t 25 -s $1 --sitemap -d 2 --subs --js | grep -E "\[javascript\]|\[linkfinder\]" | grep "$(echo $1 | unfurl format %d)"
+
+        echo -e "\nFORM FIELDS\n"
+        gospider -t 25 -s $1 --sitemap -d 2 --subs | grep -E "\[form\]" | grep "$(echo $1 | unfurl format %d)"
 
         echo -e "\nQUERY STRINGS\n"
         python3 ~/TOOLS/ReconSpider.py $1 &>/dev/null
-        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL | grep "$(echo $1 | unfurl format %d)" | uniq
-
-        echo -e "\nJS FILES\n"
-        cat results.json | jq '.js_files[]'
+        cat results.json | jq '.links[]' | tr -d '"' | qsreplace FUZZMYVAL | grep FUZZMYVAL | grep "$(echo $1 | unfurl format %d)"
 
         echo -e "\nCOMMENTS\n"
         cat results.json | jq '.comments[]'
@@ -1202,7 +1203,13 @@ crawl(){
         cat results.json | jq '.emails[]'
         rm results.json
 
-        echo -e "\nSEARCHING BROKEN LINK REFERENCES\n"
+        echo -e "\nIMAGES\n"
+        cat results.json | jq '.images[]'
+
+        echo -e "\nEXTERNAL FILES\n"
+        cat results.json | jq '.external_files[]'
+
+        echo -e "\nBROKEN LINKS\n"
         blc $1 -ro --filter-level 2 --exclude-internal
 }
 
@@ -1267,15 +1274,18 @@ dirfuzz(){
     ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
     ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
 
+    echo -e "\nCHECKING NUCLEI HTTP EXPOSURES\n"    
+    nuclei -up &>/dev/null && nuclei -ut &>/dev/null
+    nuclei -u $1 -t http/exposures
+
     echo -e "\nSEARCHING RAFT DIRECTORIES\n"
     ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
 
     echo -e "\nSEARCHING RAFT FILES\n"
     ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
 
-    echo -e "\nCHECKING NUCLEI HTTP EXPOSURES\n"    
-    nuclei -up &>/dev/null && nuclei -ut &>/dev/null
-    nuclei -u $1 -t http/exposures
+    echo -e "\nFULL DIRECTORY SEARCH\n"
+    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
 
     read -r cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (Current -> \"$1\"): "
     if [[ ! -z $cel ]]; then
@@ -1284,9 +1294,6 @@ dirfuzz(){
         ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
         rm /tmp/$(echo $1 | unfurl format %d).txt
     fi
-
-    echo -e "\nBIGGER DIRECTORY SEARCH\n"
-    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
 
     read -r resp\?"INPUT EXTENSION FOR BACKEND & BACKUP FUZZING: "
     if [[ ! -z $resp ]]; then
