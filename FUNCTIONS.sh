@@ -237,14 +237,14 @@ ftpserv(){
 
 smbserv(){
     chnic
-    echo -e "OPENING SMB SHARE AT \\\\$ip\\share"
-    smbserver.py -ip $ip -smb2support share .
+    echo -e "OPENING SMB SHARE AT \\\\\\$ip\\share WITH LOGIN \"hacker:password\""
+    smbserver.py -ip $ip -user hacker -password password -smb2support share .
 }
 
 webdavserv(){
     chnic
-    echo -e "\nOPENING WEBDAV AT http://$ip:8000\n FROM /tmp"
-    wsgidav --host=$ip --port=8000 --root=/tmp --auth=anonymous
+    echo -e "\nOPENING WEBDAV AT http://$ip:8000\n"
+    wsgidav --host=$ip --port=8000 --root=. --auth=anonymous
 }
 
 # Neo4J for Bloodhound usage
@@ -1185,13 +1185,13 @@ corscan(){
 #Crawling/JS Scraping Function
 crawl(){
         echo -e "\n200-URLS / SUBDOMAINS\n"
-        gospider -t 25 -s $1 --sitemap -d 2 --subs | grep -vE "\.js$|\.js\?" | grep -E "\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)"
+        gospider -t 25 -s $1 --sitemap -d 3 --subs | grep -vE "\.js$|\.js\?" | grep -E "\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)"
 
         echo -e "\nJS FILES & ENDPOINTS\n"
-        gospider -t 25 -s $1 --sitemap -d 2 --subs --js | grep -E "\[javascript\]|\[linkfinder\]" | grep "$(echo $1 | unfurl format %d)"
+        gospider -t 25 -s $1 --sitemap -d 3 --subs --js | grep -E "\[javascript\]|\[linkfinder\]" | grep "$(echo $1 | unfurl format %d)"
 
         echo -e "\nFORM FIELDS\n"
-        gospider -t 25 -s $1 --sitemap -d 2 --subs | grep -E "\[form\]" | grep "$(echo $1 | unfurl format %d)"
+        gospider -t 25 -s $1 --sitemap -d 3 --subs | grep -E "\[form\]" | grep "$(echo $1 | unfurl format %d)"
 
         echo -e "\nQUERY STRINGS\n"
         python3 ~/TOOLS/ReconSpider.py $1 &>/dev/null
@@ -1202,13 +1202,10 @@ crawl(){
 
         echo -e "\nEMAILS\n"
         cat results.json | jq '.emails[]'
-        rm results.json
-
-        echo -e "\nIMAGES\n"
-        cat results.json | jq '.images[]'
 
         echo -e "\nEXTERNAL FILES\n"
         cat results.json | jq '.external_files[]'
+        rm results.json
 
         echo -e "\nBROKEN LINKS\n"
         blc $1 -ro --filter-level 2 --exclude-internal
