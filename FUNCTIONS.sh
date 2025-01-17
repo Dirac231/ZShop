@@ -237,8 +237,15 @@ ftpserv(){
 
 smbserv(){
     chnic
-    echo -e "OPENING SMB SHARE AT \\\\\\$ip\\share WITH LOGIN \"hacker:password\""
-    smbserver.py -ip $ip -user hacker -password password -smb2support share .
+    read -r creds\?"INPUT \"USER:PASS\" CREDENTIALS (BLANK FOR ANONYMOUS): "
+    if [[ ! -z $creds ]]; then
+        echo -e "OPENING SMB SHARE AT \\\\\\$ip\\share WITH LOGIN \"hacker:password\""
+        smbserver.py -ip $ip -user hacker -password password -smb2support share .
+    else
+        echo -e "\nOPENING ANONYMOUS SMB SHARE AT \\\\\\$ip\\share\n"
+        smbserver.py -ip $ip -smb2support share .
+    fi
+
 }
 
 webdavserv(){
@@ -1283,7 +1290,7 @@ dirfuzz(){
     ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
 
     echo -e "\nFULL DIRECTORY SEARCH\n"
-    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
+    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-big.txt  -v
 
     read -r cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (Current -> \"$1\"): "
     if [[ ! -z $cel ]]; then
@@ -1297,9 +1304,6 @@ dirfuzz(){
     if [[ ! -z $resp ]]; then
         ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -e $resp,$resp.old,$resp.bak,$resp.tmp,$resp~,old,bak,tmp -v
     fi
-
-    echo -e "\nSEARCHING ALL WEB EXTENSIONS\n"
-    ffuf -ac -acs advanced -r  -u $1/FUF1FUF2 -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt:FUF1 -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUF2 -v
 }
 
 bckfile(){
