@@ -1,6 +1,6 @@
 # Service Hacking
 *   Host Discovery
-    *   `alive() [IP_FILE/CIDR]` → Quick Fingerprint `cat [ALIVE_IP.txt] | naabu`
+    *   `alive() [IP_FILE/CIDR]`
     *   ICMP Polling
         *   `ping()  [IP]`
         *   Windows TTL → `128`
@@ -8,41 +8,40 @@
 *   Port Scanning
     *   `tcp() [IP]`
     *   `udp() [IP]`
+    *   IPv6 Scan → `-6 [IPv6]`
     *   Firewalls / IDS Evasion
         *   Filtered / Missing Ports / Partial Banner / TCPWrapped
         *   Packet Tracing
             *   `-vv --packet-trace` 
             *   `trace() [IP]`
-        *   Handshake Confusion
-            *   `[-sT / -sA / -sF / -sN / -sX / -sW / -sM ]`
-        *   Source Spoofing
-            *   `-D RND:5 --dns-server [NS_SERVER] -g [SRC_PORT]`
-            *   `--mac-spoof [Apple/Cisco]`
         *   Manual Fingerprint
             *   `sudo nc -vn [IP] [PORT]`
             *   `sudo ncat -nv --source-port [SRC_PORT] [IP] [PORT]`
             *   `sudo tcpdump -i [NIC] host [YOUR_IP] and [TARGET]`
             *   PCAP Wireshark Analysis
-        *   IP Bouncing
-            *   `--ip-options "L [SAME_NETWORK_IP]"`
-            *   `-sI [SAME_NETWORK_IP]`
-            *   FTP
-                *   `-b [USER]:[PASS]@[FTP_IP]`
-                *   Anonymous → Empty `USER:PASS`
+        *   Source Spoofing
+            *   `-D RND:5 --dns-server [NS_SERVER] -g [SRC_PORT]`
+            *   `--mac-spoof [Apple/Cisco]`
+        *   Handshake Confusion
+            *   `[-sT / -sA / -sF / -sN / -sX / -sW / -sM ]`
         *   Fragmenting
             *   `-f -mtu 24`
             *   `--badsum` 
             *   `--data-length 25`
             *   `--data 0xdeadbeef`
-            *   `--adler32` 
-        *   IPv6 Scanning
-            *   `-6 [HOST]`
+            *   `--adler32`
+        *   IDLE Scan
+            *   `--ip-options "L [SAME_NETWORK_IP]"`
+            *   `-sI [SAME_NETWORK_IP]`
+        *   FTP Bouncing
+            *   `-b [USER]:[PASS]@[FTP_IP]`
+            *   Anonymous → Empty `USER:PASS`
 *   Service Scanning
     *   `scan() [service] [IP] [PORT]`
     *   SSL Certificates
         *   `openssl s_client -connect [HOST]:[PORT] [-starttls [SERVICE]]`
-        *   NMAP Script → `ssl-cert`
-        *   Hosts / Domains / Info Disclosure
+        *   NMAP Output → `ssl-*`
+        *   Hosts / Domains / Sensitive Exposure
     *   Exploit Research
         *   Components                 → Service Banners / Names / Versions / Nmap Output
         *   Pentesting Methods   → [Hacktricks](https://book.hacktricks.xyz/network-services-pentesting/pentesting-web) / Google / Advisories & Documentation / Native Clients & Wrappers
@@ -79,7 +78,7 @@
         *   PuTTY SSH         → `puttygen [PUTTY.KEY] -O private-openssh -o [OUT_SSH_KEY]` → SSH Key Login
         *   Word / Excel      → `olevba [FILE]`
         *   SQLITE                → `sqlite3 [FILE]` → `.tables` → `.schema [TABLE]` → `select * from [TABLE]`
-        *   XSLX                     → `unzip` / OpenOffice
+        *   XSLX                    → `unzip` / OpenOffice
 *   Service Types
     *   Databases
         *   MySQL / PSQL / MongoDB / TNS

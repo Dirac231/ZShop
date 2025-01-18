@@ -25,7 +25,7 @@
             *   PUT                                          → File Uploads
             *   IIS                                             → Short-Scanning / WebDAV Exploits & Uploads
         *   Exploit Research
-            *   Components                                    → Servers / Banners / Plugins / Libraries / Technologies
+            *   Components                                    → Servers / Banners / Plugins / Libraries / Technologies / Applications
             *   Pentesting Methods                      → [Hacktricks](https://book.hacktricks.xyz/network-services-pentesting/pentesting-web) / [HTB](https://academy.hackthebox.com/module/details/113) / Google Research / Advisories & Hardening
             *   CVEs & PoCs                                     → MSF Search / Sploitus / [Splotify](https://sploitify.haxx.it/#)/ [SearchVuln](https://search-vulns.com/) / GitHub CVEs / [Shodan](https://exploits.shodan.io/welcome)
             *   Payloads                                            → [PATT](https://github.com/swisskyrepo/PayloadsAllTheThings) / [PBOX](https://github.com/payloadbox) / WSA / Hacktricks

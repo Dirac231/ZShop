@@ -62,10 +62,10 @@
         *   `nxc smb [IP] [AUTH_STRING] --rid-brute 10000`
     *   Shares Enumeration
         *   `nxc smb [IP] [AUTH_STRING] --shares`
-        *   `smbclient -N -L //[IP]`
-        *   `smbclient -L //[IP] -U [USER%PASS]`
+        *   `smbclient -L \\[IP] [-U [USER%PASS]]`
         *   Data Access
-            *   Interactive Session       → `smbclient.py [AUTH_STRING]` → `help` / `shares`
+            *   SMBClient Native         → `smbclient \\\\[IP]\\[SHARE] [-U [USER%PASS]]`
+            *   Impacket Client            → `smbclient.py [AUTH_STRING]` → `help` / `shares`
             *   Recursive Download   → `nxc smb [IP] [AUTH_STRING] -M spider_plus -o DOWNLOAD_FLAG=True`
             *   Single Download          → `nxc smb [IP] [AUTH_STRING] --get-file '[FILE]' [OUT] --share "[SHARE]"`
             *   Local Mounting            → `mount -t cifs -o "username=[USER]" //[IP]/[SHARE] /mnt/[SHARE]`
