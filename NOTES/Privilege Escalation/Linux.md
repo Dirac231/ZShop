@@ -124,9 +124,6 @@
         *   Enumeration
             *   `ls -la /etc/cron* /var/spool/`
             *   `cat /etc/crontab /etc/anacrontab`
-            *   Profile Scripts
-                *   `ls -la /etc/profile / etc/profile.d/`
-                *   Writable Scripts → Wait / Force Login
         *   Exploitation
             *   CRON PATH Hijacking → Relative/Current Paths + `strings`
             *   SO Injection                    → `strace [BINARY] 2>&1 | grep -i -E "open|access|no such file"`
@@ -134,6 +131,13 @@
             *   LDD PATH Hijacking    → `ldd [BINARY]` / Writable `/etc/ld.so.conf.d` + `/etc/ld.so.conf`
             *   Bash Scripts                    → Writable File / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html) / Vulnerable Binary / Unquoted Comparison `""`
             *   Python Scripts               → Writable File / Vulnerable Library / Library `sys.path` Hijacking / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html)
+        *   Timers
+            *   `find / -type f -iname "*.timer"` → Check associated `.service` in `[Unit]` section
+            *   Writable ExecStart / Binary / Script
+            *   SYSTEMD PATH Hijacking → `systemctl show-environment`
+        *   Profile Scripts
+            *   `ls -la /etc/profile / etc/profile.d/`
+            *   Writable Scripts → Wait / Force Login
     *   Credential Hunting
         *   Once Compromised Root → Get All Possible Credentials
         *   Memory & Sessions (Root)
@@ -256,7 +260,7 @@
     *   Service Files
         *   `find / -type f -iname "*.service" [-writable/-readable] -exec ls -l {} \; 2>/dev/null`
         *   Writable ExecStart
-        *   Writable Executed Binary
+        *   Writable Executed Binary / Script
         *   SYSTEMD PATH Hijacking → `systemctl show-environment`
     *   Sockets
         *   `netstat -a -p --unix`

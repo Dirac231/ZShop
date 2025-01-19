@@ -34,6 +34,11 @@ listen(){
 # PyGPO Abuse Alias
 alias pygpoabuse='/home/kali/TOOLS/pyGPOAbuse/venv/bin/python3 ~/TOOLS/pyGPOAbuse/pygpoabuse.py'
 
+# AD Realm Function
+krbconf(){
+    sudo python3 ~/.local/bin/configure_krb5.py $1 $2
+}
+
 # MSF Listener / Binder Generator
 metash(){
     read -r os\?"SELECT OS (win32 / win64 / lin32 / lin64): "
@@ -1232,11 +1237,11 @@ pswgen(){
     dom=$(echo $1 | unfurl format %d)
 
     echo -e "\nGENERATING WORDLIST\n"
-    cewl $1 -d 4 -m 5 --lowercase -w passwords_$dom.txt
+    cewl $1 -d 4 -m 5 --with-numbers --convert-umlauts -w passwords_$dom.txt
 
     echo -e "\nHASHCAT MANGLING\n"
     hashcat --stdout --rules-file /usr/share/hashcat/rules/my_custom.rule passwords_$dom.txt > /tmp/pstmp_$dom.txt
-    cat /tmp/pstmp_$dom.txt | sort -u | shuf > mangled_$dom.txt; rm /tmp/pstmp_$dom.txt 
+    cat /tmp/pstmp_$dom.txt | sort -u | shuf > mangled_passwords_$dom.txt; rm /tmp/pstmp_$dom.txt 
 }
 
 # Endpoints Generation
@@ -1422,7 +1427,7 @@ wordscan(){
     case5=$(curl -kL "https://public-api.wordpress.com/rest/v1.1/sites/$dom/posts" -s -o /dev/null -w "%{http_code}")
     echo -e "\"$1/wp-json/wp/v2/users?search=admin@$dom\" -> $case5"
 
-    echo -e "\nSCANNING FOR VULNERABLE COMPONENTS\n"
+    echo -e "\nSCANNING FOR ALL VULNERABLE COMPONENTS\n"
     nuclei -ut &> /dev/null && nuclei -up &> /dev/null
     nuclei -u $1 -t github/topscoder/nuclei-wordfence-cve -tags wp-core,wp-plugin,wp-themes -rl 25 -c 5 -es info
 

@@ -51,13 +51,14 @@
     *   Password Spraying
         *   Method
             *   Recursively Update Wordlists   → Obtained & Enumerated Users / Passwords / Hashes
-            *   All Authentication Services       → FFUF / Hydra / Legba / NXC / Native Clients / Local Authentication
+            *   All Authentication Services       → FFUF / Hydra / Legba / NXC / Native Clients / Local & Domain Authentication
             *   NXC 
                 *   Services → FTP / SSH / SMB / LDAP / RDP / WINRM / MSSQL / WMI / NFS
-                *   `nxc [SERVICE] [IP] -u [USERS.txt] -p [PASSWORDS.txt] --continue-on-success`                           
-                *   `nxc [SERVICE] [IP] -u [USERS.txt] -p [USERS.txt] --no-bruteforce --continue-on-success`  
+                *   `nxc [SERVICE] [IP] -u [USERS.txt] -p [PASSWORDS.txt] [--local-auth] --continue-on-success`                        
+                *   `nxc [SERVICE] [IP] -u [USERS.txt] -p [USERS.txt] [--local-auth] --no-bruteforce --continue-on-success`
         *   Usernames
-            *   Default  → `root` / `Guest` / `Administrator` / Enumerated & Local Accounts
+            *   Default  → `root` / `Guest` / `Administrator`
+            *   All Enumerated / Local Users
             *   Bruteforced
                 *   Full Names (AD / E-Mails)  → `usergen() [FULL_NAMES]` / Seclists Names / [Statistically Likely](https://github.com/insidetrust/statistically-likely-usernames)
                 *   General Usernames            → Xato-Net / CIRT
