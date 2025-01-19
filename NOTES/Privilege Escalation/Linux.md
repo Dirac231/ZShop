@@ -239,17 +239,13 @@
             *   Memory Dumping
     *   Network 
         *   Local Services 
-            *   `netstat -puntal` → Localhost / Intranet IPs
-            *   Port Forwarding
-            *   DB Access
-                *   [UDF Root MySQL EOP](https://juggernaut-sec.com/mysql-user-defined-functions/)
-                *   Blank Password
-                *   Data Dumping
+            *   `netstat -puntal`       → Localhost / Intranet IPs
+            *   Configuration Files  → All Services + Permissions
+            *   DB Access                  → Data Dumping / Blank Password / [UDF Escalation](https://juggernaut-sec.com/mysql-user-defined-functions/)
+            *   Local Forwarding
         *   [Dynamic Forwarding](https://notes.dollarboysushil.com/pivoting-and-tunneling/ligolo-ng)
-            *   `ifconfig`
-            *   `ip route`
-            *   `10.x.x.x` / `192.168.x.x` / `172.[16-31].x.x`
-            *   Local Ping Sweep
+            *   `ifconfig` / `ip route`
+            *   Local Sweep
                 *   Valid for `/24` → Adjust Accordingly
                 *   `for i in {1..255} ;do (ping -c 1 [INTRANET_CIDR_BLOCK].$i | grep "bytes from"|cut -d ' ' -`  
                     `f4|tr -d ':' &);done`

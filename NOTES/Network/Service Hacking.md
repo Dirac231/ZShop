@@ -43,7 +43,7 @@
         *   NMAP Output → `ssl-*`
         *   Hosts / Domains / Sensitive Exposure
     *   Exploit Research
-        *   Components                 → Service Banners / Names / Versions / Nmap Output
+        *   Components                 → Service Banners / Names / Versions / Found Filenames / Processes / Strings
         *   Pentesting Methods   → [Hacktricks](https://book.hacktricks.xyz/network-services-pentesting/pentesting-web) / Google / Advisories & Documentation / Native Clients & Wrappers
         *   CVEs & PoCs                  → MSF Search / Sploitus / [Splotify](https://sploitify.haxx.it/#)/ [SearchVuln](https://search-vulns.com/) / GitHub CVEs / [Shodan](https://exploits.shodan.io/welcome) / Bookmarks
         *   Exploit Debugging      → Variables / Parameters / Requests Flow
@@ -57,11 +57,11 @@
                 *   `nxc [SERVICE] [IP] -u [USERS.txt] -p [PASSWORDS.txt] [--local-auth] --continue-on-success`                        
                 *   `nxc [SERVICE] [IP] -u [USERS.txt] -p [USERS.txt] [--local-auth] --no-bruteforce --continue-on-success`
         *   Usernames
-            *   Default  → `root` / `Guest` / `Administrator`
-            *   All Enumerated / Local Users
-            *   Bruteforced
-                *   Full Names (AD / E-Mails)  → `usergen() [FULL_NAMES]` / Seclists Names / [Statistically Likely](https://github.com/insidetrust/statistically-likely-usernames)
-                *   General Usernames            → Xato-Net / CIRT
+            *   All Enumerated Usernames
+            *   Default  → `root` / `Guest` / `Administrator` / CIRT Seclists
+            *   Bruteforcing
+                *   SMTP       → Seclists `Names.txt` / [Statistically Likely](https://github.com/insidetrust/statistically-likely-usernames) / `usergen() [FULL_NAMES.txt]`
+                *   Generic   → Xato-Net
         *   Passwords
             *   Re-Used              → Cracked / Found / Hash Dumping / Local Hunting
             *   Weak                    → Usernames / Blank / [Default Credentials](https://book.hacktricks.xyz/generic-methodologies-and-resources/brute-force#default-credentials) / Xato-Net
@@ -70,8 +70,8 @@
             *   Charsets / Pins  → `crunch [MIN_LEN] [MAX_LEN] [CHARSET] -o [OUT.txt]`
     *   Sensitive Files
         *   Credentials / Usernames / Hostnames / Endpoints / Connection Strings / Hashes & Encoded Values
+        *   Cracking            → John + `*2john` Scripts
         *   Metadata           → `file [FILE]` / `exiftool [FILE]` → Documents / Media Content / Archives
-        *   Encrypted          → John Cracking → `*2john` Scripts
         *   PCAP                   → Wireshark Analysis
         *   Binaries              → `binwalk` / `strings` / Ghidra / Disassembling
         *   APK / JAR           → `unzip` / JADX / MANIFEST File / Code Analysis
@@ -134,6 +134,7 @@
             *   `ptr() [CIDR/ASN]`
     *   Windows Stack
         *   SMB / RPC / NBT / LDAP / MSSQL / KB / WINRM
-        *   Non-AD RPC                              → `rpcmap.py 'ncacn_ip_tcp:[IP]'` + `python3 IOXIDResolver.py -t [IP]` → Extra IPs
-        *   SMB Hash Auth / Poisoning  → Also Without AD
+        *   Non-AD RPC                               → `rpcmap.py 'ncacn_ip_tcp:[IP]'` + `python3 IOXIDResolver.py -t [IP]` → Extra IPs
+        *   SMB PTH & NTLM Poisoning  → Also Without AD
+        *   MSSQL LLMNR                           → Also Without AD
         *   AD Enumeration / Attacks

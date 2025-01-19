@@ -34,9 +34,11 @@ listen(){
 # PyGPO Abuse Alias
 alias pygpoabuse='/home/kali/TOOLS/pyGPOAbuse/venv/bin/python3 ~/TOOLS/pyGPOAbuse/pygpoabuse.py'
 
-# AD Realm Function
+# AD Realm Setting Function
 krbconf(){
     sudo python3 ~/.local/bin/configure_krb5.py $1 $2
+    sudo timedatectl set-ntp off
+    sudo rdate -n $2.$1
 }
 
 # MSF Listener / Binder Generator

