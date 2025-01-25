@@ -11,7 +11,12 @@ chnic(){
 ligstart(){
     sudo ip tuntap add user `whoami` mode tun ligolo 2>/dev/null
     sudo ip link set ligolo up 2>/dev/null
-    ~/TOOLS/ligolo-ng/dist/ligolo-ng-proxy-linux_amd64 -selfcert
+    ligolo-proxy -selfcert
+}
+
+ligcreate(){
+    sudo ip tuntap add user `whoami` mode tun $2 2>/dev/null
+    sudo ip link set $2 up 2>/dev/null
 }
 
 # ICMP Probing
@@ -1492,6 +1497,7 @@ tplscan(){
     echo -e "\nTESTING SSTI / CSTI ON URL \"$1\"\n"
     tinja url -u "$1" --csti
 }
+
 
 # OS Injection Request Scanner
 osscan(){
