@@ -43,11 +43,9 @@
         *   NMAP Output → `ssl-*`
         *   Hosts / Domains / Sensitive Exposure
     *   Exploit Research
-        *   Components                 → Service Banners / Names / Versions / Found Filenames / Processes / Strings
-        *   Pentesting Methods   → [Hacktricks](https://book.hacktricks.xyz/network-services-pentesting/pentesting-web) / Google / Advisories & Documentation / Native Clients & Wrappers
+        *   Components                 → Service Banners / Versions / Application Filenames / Processes
+        *   Pentesting Methods   → [Hacktricks](https://book.hacktricks.xyz/network-services-pentesting/pentesting-web) / Google / Advisories & Documentation / Blind Attempt
         *   CVEs & PoCs                  → MSF Search / Sploitus / [Splotify](https://sploitify.haxx.it/#)/ [SearchVuln](https://search-vulns.com/) / GitHub CVEs / [Shodan](https://exploits.shodan.io/welcome) / Bookmarks
-        *   Exploit Debugging      → Variables / Parameters / Requests Flow
-        *   Alternative & Multiple Exploits → Combine Them / Get Maximum Possible Data
     *   Password Spraying
         *   Method
             *   Recursively Update Wordlists   → Obtained & Enumerated Users / Passwords / Hashes
@@ -58,28 +56,18 @@
                 *   `nxc [SERVICE] [IP] -u [USERS.txt] -p [USERS.txt] [--local-auth] --no-bruteforce --continue-on-success`
         *   Usernames
             *   All Enumerated Usernames
-            *   Default  → `root` / `Guest` / `Administrator` / CIRT Seclists
+            *   Default  → `root` / `Guest` / `Administrator` / CIRT
             *   Bruteforcing
                 *   SMTP       → Seclists `Names.txt` / [Statistically Likely](https://github.com/insidetrust/statistically-likely-usernames) / `usergen() [FULL_NAMES.txt]`
-                *   Generic   → Xato-Net
+                *   Generic   → Xato-Net / CIRT
+                *   Services   → Ident / Finger / OpenSSH < 7.7 / Solaris FTP / Kerberos / SMTP
         *   Passwords
             *   Re-Used              → Cracked / Found / Hash Dumping / Local Hunting
-            *   Weak                    → Usernames / Blank / [Default Credentials](https://book.hacktricks.xyz/generic-methodologies-and-resources/brute-force#default-credentials) / Xato-Net
-            *   Mutations           → Hashcat Rules / [Policy Filtering](https://academy.hackthebox.com/module/57/section/506) / [PassGen](https://weakpass.com/tools/passgen) / Special Chars & Guessable Numbers (Dates / IDs / Etc…)
-            *   Generated          → `pswgen() [URL]` / Personal Data → `cupp -i`
+            *   Weak                    → Usernames / Blank & Guest / [Default Credentials](https://book.hacktricks.xyz/generic-methodologies-and-resources/brute-force#default-credentials) / `searchpass() [SERVICE/APP]`
+            *   Mutations           → Best64 + [Clem9669](https://github.com/clem9669/hashcat-rule) Rules / [Policy Filtering](https://academy.hackthebox.com/module/57/section/506) / Guessable Data (Dates / IDs / Timestamps)
+            *   Generated          → `pswgen() [URL]` / `cupp -i`
             *   Charsets / Pins  → `crunch [MIN_LEN] [MAX_LEN] [CHARSET] -o [OUT.txt]`
-    *   Sensitive Files
-        *   Credentials / Usernames / Hostnames / Endpoints / Connection Strings / Hashes & Encoded Values
-        *   Cracking            → John + `*2john` Scripts
-        *   Metadata           → `file [FILE]` / `exiftool [FILE]` → Documents / Media Content / Archives
-        *   PCAP                   → Wireshark Analysis
-        *   Binaries              → `binwalk` / `strings` / Ghidra / Disassembling
-        *   APK / JAR           → `unzip` / JADX / MANIFEST File / Code Analysis
-        *   KeePass              → `kpcli --kdb [KBDX_FILE]` / [Dump Password Recovery](https://0xdf.gitlab.io/2024/02/10/htb-keeper.html#)
-        *   PuTTY SSH         → `puttygen [PUTTY.KEY] -O private-openssh -o [OUT_SSH_KEY]` → SSH Key Login
-        *   Word / Excel      → `olevba [FILE]`
-        *   SQLITE                → `sqlite3 [FILE]` → `.tables` → `.schema [TABLE]` → `select * from [TABLE]`
-        *   XSLX                    → `unzip` / OpenOffice
+            *   Bruteforcing      → Xato-Net / Probable-V2 / Darkweb2017 / CIRT / BetterDefault
 *   Service Types
     *   Databases
         *   MySQL / PSQL / MongoDB / TNS
@@ -102,12 +90,12 @@
             *   `swaks --server [SMTP_IP] --to victim@[DOMAIN] --from attacker@[DOMAIN] --header "Subject: test" --body "[LINK]"`
             *   Direct Links
                 *   NTLM Stealing → LLMNR Via Responder
-                *   RCE                     →  HTA Files
+                *   HTA RCE            → `metash()` + HTA
                 *   XSS                      → Cookie & Response Stealing / XHR CSRF
                 *   HTTP Interception
             *   Malicious Attachment
                 *   `--attach [FILE]`
-                *   Macro RCE        → `metash()` + VBA / VBS
+                *   Macro RCE        → `metash()` + VBA / VBS → Google Docs Embedding
                 *   Follina RCE       → [RTF / DOCX Generator](https://github.com/maxgestic/Follina-Generator)
                 *   LLMNR               → NTLM-Theft Office Files / Bad-PDF
     *   SNMP
@@ -138,3 +126,19 @@
         *   SMB PTH & NTLM Poisoning  → Also Without AD
         *   MSSQL LLMNR                           → Also Without AD
         *   AD Enumeration / Attacks
+*   Sensitive Files
+    *   Credentials / Usernames / Hostnames / Endpoints / Connection Strings / Hashes & Encoded Values
+    *   Cracking            → John + `*2john` Scripts
+    *   Metadata           → `file [FILE]` / `exiftool [FILE]` → Documents / Media Content / Archives
+    *   PCAP                   → Wireshark Analysis
+    *   Binaries              → `binwalk` / `strings` / Ghidra / Disassembling
+    *   APK / JAR           → `unzip` / JADX / MANIFEST File / Code Analysis
+    *   KeePass              → `kpcli --kdb [KBDX_FILE]` / [Dump Password Recovery](https://0xdf.gitlab.io/2024/02/10/htb-keeper.html#)
+    *   PuTTY SSH         → `puttygen [PUTTY.KEY] -O private-openssh -o [OUT_SSH_KEY]` → SSH Key Login
+    *   Word / Excel      → `olevba [FILE]`
+    *   SQLITE                → `sqlite3 [FILE]` → `.tables` → `.schema [TABLE]` → `select * from [TABLE]`
+    *   XSLX                    → `unzip` / OpenOffice
+*   Hash Cracking
+    *   Identification             → `hashid [HASH]` / `hashcat --identify [HASH]` / [Weakpass Lookup](https://weakpass.com/tools/lookup)
+    *   [Hashcat Cracking](https://github.com/unstable-deadlock/brashendeavours.gitbook.io/blob/master/pentesting-cheatsheets/hashcat-hash-modes.md)   → `hashcat -m [MODE] -a 0 [ROCKYOU/WEAKPASS] -r [HASHCAT_RULE] --force [HASH.hashcat]` + [Rules Usage](https://github.com/NotSoSecure/password_cracking_rules)
+    *   John Cracking           → `john --fork=15 --wordlist=[ROCKYOU/WEAKPASS] --rules=[HASHCAT_RULE] --format=[FORMAT] [HASH.john]`

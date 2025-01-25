@@ -30,6 +30,7 @@
     *   Fingerprinting
         *   `hostmap()  [ROOT DOMAIN]`
         *   `webprobe() [RESOLVED.txt]`
+        *   [Web Checker](https://web-check.xyz/) / [URLScan](https://urlscan.io/)
     *   Archive Mining
         *   `filemine() [ROOT DOMAIN]`
         *   `paramine() [ROOT DOMAIN]` + GF-Patterns / Fuzzing

