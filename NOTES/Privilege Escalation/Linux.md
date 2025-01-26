@@ -247,7 +247,7 @@
         *   Local Services 
             *   `netstat -puntal`       → `127.0.0.1` / Intranet IPs
             *   Associated Process  → `ps -p [SERVICE_PID] -o command` → Check Privilege / Process String
-            *   Configuration Files  → All Services + Permissions
+            *   Configuration Files  → All Services + Permissions (MySQL → `my.cnf`)
             *   DB Access                  → Data Dumping / Blank Password / [UDF Escalation](https://juggernaut-sec.com/mysql-user-defined-functions/)
             *   Local Forwarding
         *   [Dynamic Forwarding](https://notes.dollarboysushil.com/pivoting-and-tunneling/ligolo-ng)

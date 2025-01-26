@@ -15,8 +15,8 @@ ligstart(){
 }
 
 ligcreate(){
-    sudo ip tuntap add user `whoami` mode tun $2 2>/dev/null
-    sudo ip link set $2 up 2>/dev/null
+    sudo ip tuntap add user `whoami` mode tun $1 2>/dev/null
+    sudo ip link set $1 up 2>/dev/null
 }
 
 # ICMP Probing

