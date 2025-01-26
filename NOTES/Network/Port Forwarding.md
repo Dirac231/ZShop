@@ -12,8 +12,8 @@
         *   Generic    → `192.168.0.0/16`, `172.16.0.0/12`, `10.0.0.0/8`
         *   Linux        → `ip route`
         *   Windows → `route PRINT` → Check Router + Mask
-    *   Nmap Scanning
-        *   `sudo nmap -PE -sn  [INTRANET_CIDR]`
+    *   Ping Sweep / Service Scanning
+        *   `fping -asgq        [INTRANET_CIDR]`
         *   `sudo nmap -PE -sCV [INTRANET_IP]`
     *   Shells / File Transfers
         *   Kali                             → `listener_add --addr 0.0.0.0:30000 --to [KALI_IP]:[KALI_PORT] --tcp` 
