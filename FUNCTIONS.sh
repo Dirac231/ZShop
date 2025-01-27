@@ -1206,8 +1206,8 @@ crawl(){
         echo -e "\n200-URLS / SUBDOMAINS\n"
         gospider -t 25 -s $1 --sitemap -d 3 --subs | grep -vE "\.js$|\.js\?" | grep -E "\[code-200]|\[subdomains\]" | grep "$(echo $1 | unfurl format %d)"
 
-        echo -e "\nJS FILES & ENDPOINTS\n"
-        gospider -t 25 -s $1 --sitemap -d 3 --subs --js | grep -E "\[javascript\]|\[linkfinder\]" | grep "$(echo $1 | unfurl format %d)"
+        echo -e "\nJS FILES\n"
+        gospider -t 25 -s $1 --sitemap -d 3 --subs --js | grep -E "\[javascript\]" | grep "$(echo $1 | unfurl format %d)"
 
         echo -e "\nFORM FIELDS\n"
         gospider -t 25 -s $1 --sitemap -d 3 --subs | grep -E "\[form\]" | grep "$(echo $1 | unfurl format %d)"
@@ -1679,11 +1679,8 @@ subperm(){
     echo -e "\nFETCHING RESOLVERS AND WORDLISTS\n"
     wget https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -O ~/WORDLISTS/public_resolvers.txt   
 
-    echo -e "\nSEARCHING PERMUTATION DOMAINS\n"
-    gotator -sub $1 -perm dns_permutations_list.txt -depth 1 -numbers 10 -mindup -adv -md | sort -u > sub_perms.txt
-
     echo -e "\nRESOLVING PERMUTED DOMAINS\n"
-    puredns resolve ~/WORDLISTS/permutations.txt -r ~/WORDLISTS/public_resolvers.txt sub_perms.txt > permuted_resolved.txt; rm sub_perms.txt
+    cat $1 | dnsgen - | puredns resolve -r ~/WORDLISTS/public_resolvers.txt -w permuted_resolved.txt
 }
 
 # Subdomain Takeover function

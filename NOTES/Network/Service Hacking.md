@@ -132,7 +132,7 @@
     *   Metadata           → `file [FILE]` / `exiftool [FILE]` → Documents / Media Content / Archives
     *   PCAP                   → Wireshark Analysis
     *   Binaries              → `binwalk` / `strings` / Ghidra / Disassembling
-    *   APK / JAR           → `unzip` / JADX / MANIFEST File / Code Analysis
+    *   APK / JAR           → `unzip` / JADX / Code Analysis / [APKLeaks](https://github.com/dwisiswant0/apkleaks)
     *   KeePass              → `kpcli --kdb [KBDX_FILE]` / [Dump Password Recovery](https://0xdf.gitlab.io/2024/02/10/htb-keeper.html#)
     *   PuTTY SSH         → `puttygen [PUTTY.KEY] -O private-openssh -o [OUT_SSH_KEY]` → SSH Key Login
     *   Word / Excel      → `olevba [FILE]`

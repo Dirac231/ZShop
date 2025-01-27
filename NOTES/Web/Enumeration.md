@@ -1,4 +1,8 @@
 # Enumeration
+*   Practice Resources
+    *   [OVWAD Vulnerable Applications](https://owasp.org/www-project-vulnerable-web-applications-directory/)
+    *   Portswigger Academy
+    *   PentesterLab / HTB
 *   Crawling
     *   Tools
         *   `crawl() [URL]`
@@ -9,14 +13,18 @@
         *   HREFs / Absolute / Relative / Broken URLs
         *   Comments / Native JS Code
     *   JS Mining
-        *   `jsmine() [SINGLE_URL]`                              → Burp Pro Extensions
+        *   `jsmine() [SINGLE_URL]`                              → Burp Pro Extensions / [GAP](https://github.com/xnl-h4ck3r/GAP-Burp-Extension) 
+        *   [Deobfuscation](http://deobfuscate.io)
         *   Credentials / Endpoints / Parameters   → [Token Regexes](https://github.com/mazen160/secrets-patterns-db) + [KeyHacks Usage](https://github.com/streaak/keyhacks)
         *   JS Functions                                                 → Console Calls / Sensitive Exposure
         *   Dependency Confusion                            → NodeJS / React / Angular / Frameworks
         *   Sensitive Exposure                                      → E-Mails / Domains / Hostnames / User Data / Techstack Information
 *   Discovery
     *   Technology Stack
-        *   `techscan() [URL]` → RetireJS / Wappalyzer
+        *   Enumeration
+            *   `techscan() [URL]`
+            *   Browser Extensions → RetireJS / Wappalyzer / WhatRuns / BuiltWith
+            *   Public Websites        → [Web Checker](https://web-check.xyz/) / [URLScan](https://urlscan.io/)
         *   Server Information
             *   TLS Certificate                     →  `ca.key` Stealing / Heartbleed / Sensitive Exposure
             *   HTTP Methods                     → `curl -kILX OPTIONS [SERVER_URL]` 
@@ -33,7 +41,7 @@
     *   Directories & Files
         *   `dirfuzz() [URL/PATH]`      → Recursive / Nested / 30X & 40X Endpoints / Crawled URLs
         *   `apifuzz() [URL]`                → REST / GraphQL Endpoints
-        *   Wordlist Selection             → `urlgen() [URL]` / GitHub Paths / Seclists Search / [Assetnote Extensions](https://wordlists.assetnote.io/) / Techstack Specific
+        *   Wordlist Selection             → `urlgen() [URL]` / GitHub Paths / Seclists Content / [Assetnote](https://wordlists.assetnote.io/) / [Wordlistgen](https://github.com/ameenmaali/wordlistgen) + [WayMore](https://github.com/xnl-h4ck3r/waymore)
         *   [Dependency Confusion](https://github.com/visma-prodsec/confused) → `pom.xml` / `installed.json` / `composer.json` / `package.json` / `requirements.txt`
         *   Verbose Errors                     → 404 Pages / Stack Traces
         *   GIT Endpoints
@@ -52,8 +60,8 @@
         *   `paramscan() [URL/BACKEND_FILE]`
         *   `headscan()  [ROOT_URL] [METHOD]`
         *   Burp Extension  → Param Miner
-    *   Request Fuzzing
-        *   `paramfuzz() [QUERY_STRING]` / POST Data / Path Strings & Values / Functional Inspection
-        *   Parameter & Header Reflection / Parsing / Validation
-        *   Stack Traces / Verbose Errors / Debug Messages
-        *   Blind Exploitation (Log4J / SQL / OS / Headers)
+*   Fuzzing
+    *   `paramfuzz() [QUERY_STRING]` / POST Data / Path Strings & Values / Functional Inspection
+    *   Data Reflection / Parsing / Validation
+    *   Blind Exploitation (Log4J / SQL / OS / Headers)
+    *   Burpsuite Extensions → Backlash Powered Scanner
