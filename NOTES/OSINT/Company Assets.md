@@ -6,29 +6,31 @@
         *   [OCCRP](https://aleph.occrp.org)
         *   [BGP](https://bgp.he.net/)/ [RIPE](https://apps.db.ripe.net/db-web-ui/query?searchtext=) → `ptr() [CIDR]` + ASN Mapping 
         *   BuiltWith       → [`https://builtwith.com/relationships/[ROOT_DOMAIN]`](https://builtwith.com/relationships/[ROOT_DOMAIN]) OR [Script](https://raw.githubusercontent.com/m4ll0k/Bug-Bounty-Toolz/master/getrelationship.py) → `getrelationship.py [ROOT_DOMAIN] [COOKIE]`
-        *   TM Dorking   → `"© 2019 Twitch Interactive, Inc."`
+        *   TM Dorking   → `"© [YEAR] [COMPANY_NAME_BANNER]"`
     *   Subdomains
-        *   `subfind()  [ROOT DOMAIN]` → Passive Sources → API Population `amass enum -list` / Subfinder Config File
-        *   `subbrute() [ROOT DOMAIN]`
-        *   `subperm()  [SUBDOMAINS_FILE]`
-        *   `resolve()  [SUBDOMAINS_FILE]`
-        *   Link Crawling
-            *   Burp Sitemap Filtering
-            *   `crawl() [WEB_APP_URL]` → CLI Filtering
-        *   [Cloud Ranges](http://kaeferjaeger.gay/?dir=sni-ip-ranges)
-            *   `cat *.txt | grep -F ".[ROOT_DOMAIN]" | awk -F'-- ' '{print $2}'| tr ' ' '\n' | tr '[' ' ‘| sed 's/ //’| sed 's/\]//’| grep -F ".[ROOT_DOMAIN]" | sort -u`
+        *   Passive Source
+            *   `subfind()  [ROOT DOMAIN]`
+            *   API Data Settings → `amass enum -list` + `~/.config/subfinder/config.yml` File
+        *   Bruteforcing / Resolving
+            *   `subbrute() [ROOT DOMAIN]`
+            *   `subperm()  [SUBDOMAINS_FILE]`
+            *   `resolve()  [SUBDOMAINS_FILE]`
+        *   Web Crawling
+            *   `crawl() [WEB_APP_URL]` → CLI Domain Filtering
+            *   Burp Sitemap Filtering → Recursively on Links
+        *   Cloud Ranges
+            *   [Fetch TXT Files](https://kaeferjaeger.gay/?dir=sni-ip-ranges)
+            *   `cat [FILE.txt] | grep -F ".apple.com" | awk -F'-- ' '{print $2}'| tr ' ' '\n' | tr '[' ' ' | sed 's/ //' | sed 's/\]//' | grep -F ".apple.com" | sort -u`
 *   Network
     *   Enumeration
         *   [BGP](https://bgp.he.net/)/ [RIPE](https://apps.db.ripe.net/db-web-ui/query?searchtext=)
         *   `asn() [ORGANIZATION]`
-    *   Passive Fingerprinting
+    *   Shodan Fingerprinting
         *   `shodscan()    [ASN/CIDR/IP_LIST]`
         *   `hackstat()    [SSL/ORG/NET/ASN_SHODAN_QUERY]`
         *   `shodan domain [ROOT DOMAIN]`
-        *   [Queries](https://github.com/jakejarvis/awesome-shodan-queries) & [Filters](https://www.shodan.io/search/filters)
-        *   [Specific Shodan Services](https://github.com/random-robbie/My-Shodan-Scripts)
-        *   [Exploitative Shodan Queries](https://github.com/HernanRodriguez1/Dorks-Shodan-2023)
-        *   [ZoomEye](https://www.zoomeye.hk/) / [Censys](https://search.censys.io/) Search
+        *   [Queries](https://github.com/jakejarvis/awesome-shodan-queries) & [Filters](https://www.shodan.io/search/filters) & [Services](https://github.com/random-robbie/My-Shodan-Scripts) / [Exploit Queries](https://github.com/HernanRodriguez1/Dorks-Shodan-2023)
+        *   [ZoomEye](https://www.zoomeye.hk/) / [Censys](https://search.censys.io/)
     *   Active Fingerprinting
         *   `alive()       [CIDR/IP_LIST]`
         *   `fingerprint() [CIDR/IP_LIST]`
@@ -39,7 +41,7 @@
         *   [DockerHub Search](https://hub.docker.com/)
     *   Scanning
         *   Nuclei         → `nuclei -l [WEB_URLS.txt] -t [TEMPLATE_FOLDER]/* -t [TEMPLATE_FOLDER2]/* {...}`
-        *   Extensions → [AllForOne](https://github.com/AggressiveUser/AllForOne) / [CENT](https://github.com/xm1k3/cent) / Wordfence
+        *   Extensions → [AllForOne](https://github.com/AggressiveUser/AllForOne) / [CENT](https://github.com/xm1k3/cent) / WordFence
     *   Archive Mining
         *   `filemine() [ROOT DOMAIN]`
         *   `paramine() [ROOT DOMAIN]` + GF-Patterns / Fuzzing

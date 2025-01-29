@@ -36,13 +36,16 @@
         *   FTP Bouncing
             *   `-b [USER]:[PASS]@[FTP_IP]`
             *   Anonymous → Empty `USER:PASS`
+        *   Port Knocking
+            *   `knock [IP] [PORT1] [PORT2] {...}`
 *   Service Scanning
-    *   `scan() [service] [IP] [PORT]`
+    *   Generic Enumeration → `scan() [service] [IP] [PORT]`
     *   SSL Certificates
-        *   `openssl s_client -connect [HOST]:[PORT] [-starttls [SERVICE]]`
-        *   NMAP Output → `ssl-*`
+        *   `openssl s_client -crlf -connect [HOST]:[PORT] [-starttls [SERVICE_NAME]]`
+        *   NMAP Output → `ssl-*` Scripts
         *   Hosts / Domains / Sensitive Exposure
     *   Exploit Research
+        *   Nmap Scripts                → `vulners.nse` / `vulscan` / `vuln` Category
         *   Components                 → Service Banners / Versions / Application Filenames / Processes
         *   Pentesting Methods   → [Hacktricks](https://book.hacktricks.xyz/network-services-pentesting/pentesting-web) / Google / Advisories & Documentation / Blind Attempt
         *   CVEs & PoCs                  → MSF Search / Sploitus / [Splotify](https://sploitify.haxx.it/#)/ [SearchVuln](https://search-vulns.com/) / GitHub CVEs / [Shodan](https://exploits.shodan.io/welcome) / Bookmarks
@@ -78,17 +81,21 @@
         *   FTP / NFS / RSYNC
         *   Sensitive Exposure
         *   File Upload
-        *   FTP Direct Folder Access                 → `C:\[PATH]` / `/[PATH]` / `~` / `C:\ProgramData` / `C:\Users\[USERNAME]\AppData` 
-        *   FTP Direct File Access / Traversal   → `get ../../../[FILE]` / `get [PATH/FILE]`
+        *   FTP Direct Folder Access                   → `C:\[PATH]` / `/[PATH]` / `~` / `C:\ProgramData` / `C:\Users\[USERNAME]\AppData` 
+        *   FTP Direct File Access / Traversal    → `get ../../../[FILE]` / `get [PATH/FILE]`
     *   E-Mail
         *   SMTP / IMAP / POP3
             *   Open Relaying 
             *   SPF & DMARC Spoofing
             *   Mailbox Access
             *   Username Bruteforcing
+            *   SMTP Smuggling
+                *   `python3 smtp_smuggling_scanner.py [RECEIVER_USER] --outbound-smtp-server [IP] --port [PORT] --sender-address [SENDER_USER] [--starttls --username [USER] --password "[PASS]"]`
         *   Phishing
-            *   `swaks --server [SMTP_IP] --to victim@[DOMAIN] --from attacker@[DOMAIN] --header "Subject: test" --body "[LINK]"`
+            *   `swaks --server [IP]:[PORT] --to victim@[DOMAIN] --from attacker@[DOMAIN] --header "Subject: test"`
+            *   TLS / Auth Flags → `-tls --auth-user [USER] --auth-password [PASSWORD]`
             *   Direct Links
+                *   `--body "[LINK]"`
                 *   NTLM Stealing → LLMNR Via Responder
                 *   HTA RCE            → `metash()` + HTA
                 *   XSS                      → Cookie & Response Stealing / XHR CSRF
@@ -98,6 +105,9 @@
                 *   Macro RCE        → `metash()` + VBA / VBS → Google Docs Embedding
                 *   Follina RCE       → [RTF / DOCX Generator](https://github.com/maxgestic/Follina-Generator)
                 *   LLMNR               → NTLM-Theft Office Files / Bad-PDF
+            *   SMTP Smuggling
+                *   Postfix - [CVE-2023-51764](https://nvd.nist.gov/vuln/detail/cve-2023-51764)
+                *   Arbitrary Spoofing + `\n\r` Combinations
     *   SNMP
         *   Process Strings  → Usernames / Credentials / Hosts / Web Content & Services / Exploit Research
         *   IPv6 Addresses  → `[SNMPWALK_ENUM] ipAddressIfIndex.ipv6 | cut -d'"' -f2 | grep 'de:ad' | sed -E 's/(.{2}):(.{2})/\1\2/g'`
@@ -122,8 +132,7 @@
             *   `ptr() [CIDR/ASN]`
     *   Windows Stack
         *   SMB / RPC / NBT / LDAP / MSSQL / KB / WINRM
-        *   Non-AD RPC                               → `rpcmap.py 'ncacn_ip_tcp:[IP]'` + `python3 IOXIDResolver.py -t [IP]` → Extra IPs
-        *   SMB PTH & NTLM Poisoning  → Also Without AD
+        *   SMB PTH / NTLM Poisoning   → Also Without AD
         *   MSSQL LLMNR                           → Also Without AD
         *   AD Enumeration / Attacks
 *   Sensitive Files
@@ -138,7 +147,9 @@
     *   Word / Excel      → `olevba [FILE]`
     *   SQLITE                → `sqlite3 [FILE]` → `.tables` → `.schema [TABLE]` → `select * from [TABLE]`
     *   XSLX                    → `unzip` / OpenOffice
-*   Hash Cracking
-    *   Identification             → `hashid [HASH]` / `hashcat --identify [HASH]` / [Weakpass Lookup](https://weakpass.com/tools/lookup)
-    *   [Hashcat Cracking](https://github.com/unstable-deadlock/brashendeavours.gitbook.io/blob/master/pentesting-cheatsheets/hashcat-hash-modes.md)   → `hashcat -m [MODE] -a 0 [ROCKYOU/WEAKPASS] -r [HASHCAT_RULE] --force [HASH.hashcat]` + [Rules Usage](https://github.com/NotSoSecure/password_cracking_rules)
-    *   John Cracking           → `john --fork=15 --wordlist=[ROCKYOU/WEAKPASS] --rules=[HASHCAT_RULE] --format=[FORMAT] [HASH.john]`
+*   Hashed / Encoded Strings
+    *   Identification                → `hashid [HASH]` / `hashcat --identify [HASH]` / [Weakpass](https://weakpass.com/tools/lookup) / [Crackstation](https://crackstation.net/) 
+    *   [Hashcat Cracking](https://github.com/unstable-deadlock/brashendeavours.gitbook.io/blob/master/pentesting-cheatsheets/hashcat-hash-modes.md)      → `hashcat -m [MODE] -a 0 [ROCKYOU/WEAKPASS] -r [HASHCAT_RULE] --force [HASH.hashcat]` + [Rules Usage](https://github.com/NotSoSecure/password_cracking_rules)
+    *   John Cracking              → `john --fork=15 --wordlist=[ROCKYOU/WEAKPASS] --rules=[HASHCAT_RULE] --format=[FORMAT] [HASH.john]`
+    *   Incomplete Length     → Alphanumeric Bruteforce Characters
+    *   Encoded Values           → [CyberChef](https://gchq.github.io/CyberChef/) + Output Suggestion / `echo -n` + `tr -d '\n'` for CLI Encodings
