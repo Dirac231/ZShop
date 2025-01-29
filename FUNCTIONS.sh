@@ -1626,13 +1626,18 @@ whoiscan(){
 
 # Passive subdomain enumeratio
 subfind(){
-echo -e "\nPASSIVE SOURCE ENUMERATION\n"
+    echo -e "\nPASSIVE SOURCE ENUMERATION\n"
     chaos --update && chaos -d $1 -silent -key $chaos_key | anew -q subdomains_$1.txt
     amass enum -passive -norecursive -noalts -d $1 | anew -q subdomains_$1.txt
 	subfinder -d $1 -config ~/.config/subfinder/config.yml -silent | anew -q subdomains_$1.txt
     echo $1 | haktrails subdomains | anew -q subdomains_$1.txt
 	assetfinder --subs-only $1 | anew -q subdomains_$1.txt
     findomain -quiet -t $1 | anew -q subdomains_$1.txt; rm iet 2>/dev/null
+
+    echo -e "\nSCANNING SNI RANGES FOR WEB SUBDOMAINS\n"
+    echo "amazon\ndigitalocean\ngoogle\nmicrosoft\noracle" | while read provider; do curl -ks https://kaeferjaeger.gay/sni-ip-ranges/$provider/ipv4_merged_sni.txt -o ~/WORDLISTS/ipv4_sni_$provider.txt; done
+    cat ~/WORDLISTS/ipv4_sni_*.txt | grep -F ".$1" | awk -F'-- ' '{print $2}'| tr ' ' '\n' | tr '[' ' ' | sed 's/ //' | sed 's/\]//' | grep -F ".$1" | sort -u > tmpdomsni_$1 && cat tmpdomsni_$1 && cat tmpdomsni_$1 | anew -q subdomains_$1.txt && rm tmpdomsni_$1
+
     echo -e "\nFINISHED GETTING SUBDOMAINS\n"
 }
 
