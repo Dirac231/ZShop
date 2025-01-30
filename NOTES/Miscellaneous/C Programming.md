@@ -13,8 +13,9 @@ static int x = 5;
 int main(int argc, char** argv){
     // Variables inside functions are local, stored on stack
     // Native Types
-    char a = 'a';       // 1 Byte    %c - They map to integers from 0 to 256 - ASCII Hex Table
+    char a = 'a';       // 1 Byte    %c - Integers from 0 to 256 - ASCII Hex Table
     int c = 0;          // 4 Bytes   %d
+    float d = 2.22      // 4 Bytes   %f
     double pi = 3.14;   // 8 Bytes   %lf
 
     // Sizes
@@ -35,23 +36,27 @@ int main(int argc, char** argv){
     unsigned double pi = 3.14;   // 8 Bytes   %ug
 
     // "long" modifier - doubles the size of a variable
-    long int x = 1;      // 8 Bytes
-    long double = 3.14;  // 16 Bytes
+    long int x = 1;      // 8 Bytes   %Ld
+    long double = 3.14;  // 16 Bytes  %Lf
 
     // "const" modifier - makes a variable read-only
     const double multiply = 1.51;
 
     // Type casting - Change variable type at runtime
     double frac = (double)1/2;  // Produces 0.5 instead of 0
+}
+```
 
-    // User Input
+### User Input
+```C
+int main(){
     double a;                                          // Numbers
     if(!scanf("%lf",&a)) return -1;
 
-    char input[257];                                   // Strings 
+    char input[257];                                   // Strings - Strip "\r" and "\n" bytes
     if(!fgets(buf, sizeof(buf), stdin)) return -1;
     if(strlen(input) >= sizeof(input) - 1) return -1;
-    input[strcspn(input, "\r\n")] = 0;                 // Strip "\r" and "\n" bytes
+    input[strcspn(input, "\r\n")] = 0;                 
 }
 ```
 
