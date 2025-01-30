@@ -22,15 +22,6 @@ int main(int argc, char** argv){
     size_t x = 40;                    // 8 Bytes   %zu - Used for allocation sizes and array indexes
     printf("%zu", sizeof(var_here));  // "sizeof()" is used to compute the size of an object
 
-    // Pointers
-    int* p = NULL;   // Integer Pointer is initialized to NULL
-
-    *p = 0;          // Pointer holds the value "0"
-    p = &x;          // Pointer points to the address of "x"
-
-    p++              // Pointer is first considered, then incremented by 1
-    ++p              // Pointer is first incremented by 1, then considered
-
     // "unsigned" modifier - shifts a variable to positive-only values
     unsigned int x = 5;          // 4 Bytes   %ud
     unsigned double pi = 3.14;   // 8 Bytes   %ug
@@ -47,45 +38,95 @@ int main(int argc, char** argv){
 }
 ```
 
-### User Input
+### Pointers & Arrays
 ```C
 int main(){
-    double a;                                          // Numbers
-    if(!scanf("%lf",&a)) return -1;
+    // Pointers
+    int* p = NULL;   // Integer Pointer is initialized to NULL
 
-    char input[257];                                   // Strings - Strip "\r" and "\n" bytes
-    if(!fgets(buf, sizeof(buf), stdin)) return -1;
-    if(strlen(input) >= sizeof(input) - 1) return -1;
-    input[strcspn(input, "\r\n")] = 0;                 
+    *p = 0;          // Pointer holds the value "0"
+    p = &x;          // Pointer points to the address of "x"
+
+    p++              // Pointer is first considered, then incremented by 1
+    ++p              // Pointer is first incremented by 1, then considered
+
+    // Static arrays - Constant size - On Stack
+    char chache[26] = {0};
+
+    // Dynamic arrays - Variable size - On Heap
+    int* arr = malloc([INIT_SIZE] * sizeof(*arr));        // Initial Allocation
+    if(!arr) return -1;                                   // Check if the allocation was successful
+    int* arr = realloc(arr, [NEW_SIZE] * sizeof(*arr));   // Re-Allocation to extend space forward
+    free(arr)                                             // Free after usage is completed
 }
 ```
 
 ### Functions
 ```C
-// Value arguments (modify local copies of variables)
+// Value arguments - Modify local copies of variables)
 int sum_val(int x, int y){
     int z = x + y;
     return z;
 }
 
-// Reference arguments (modify variables outside the function call, due to pointers being global)
+// Pointer arguments - Modify variables outside the function call, due to pointers being global
 void sum_p(int* x, int* y, int* result){
     *result = *x + *y;
 }
 ```
 
-### Arrays
+### User Input
 ```C
-// Static arrays - Constant size - On Stack
-char chache[26] = {0};
+int main(){
+    // Numbers
+    double a;                                         
+    if(!scanf("%lf",&a)) return -1; // Read Check
 
-// Dynamic arrays - Variable size - On Heap
-int* arr = malloc([INIT_SIZE] * sizeof(*arr));        // Initial Allocation
-if(!arr) return -1;                                   // Check if the allocation was successful
-int* arr = realloc(arr, [NEW_SIZE] * sizeof(*arr));   // Re-Allocation to extend space forward
-free(arr)                                             // Free after usage is completed
+    // Strings - 
+    char input[257];                                   
+    if(!fgets(buf, sizeof(buf), stdin)) return -1;     // Read Check
+    if(strlen(input) >= sizeof(input) - 1) return -1;  // Length Check
+    input[strcspn(input, "\r\n")] = 0;                 // Strip "\r" and "\n" bytes
+}
 ```
 
+
+### CLI Arguments
+```C
+// Argument style: ./binary --arg1 value1 --arg2 value2
+int main(int argc, char** argv){
+
+    // "argc" stores the number of arguments, print usage if it's less than the number of required arguments + 1
+    if(argc < 2) printf("Usage: %s --arg1 val1", argv[0]);
+
+    // Iterate over the arguments array "argv", store each value in the corresponding string
+    for(int i = 1; i < argc - 1; i++){
+        if(!strcmp("--arg1", argv[i]) && !strpbrk(argv[i+1], "--")) printf("%s", argv[i+1]);
+        if(!strcmp("--arg2", argv[i]) && !strpbrk(argv[i+1], "--")) printf("%s", argv[i+1]);
+    }
+    return 0;
+}
+```
+
+### File Handling
+File can be handled in C using the `FILE` pointer handler
+```C
+// Open/Create a local File
+FILE* fptr = fopen("path/to/file.txt", "a+");
+
+// Write to file
+fprintf(fptr, "Some text");
+
+// Read file line-by-line
+char* line = NULL;
+size_t len = 0;
+while((getline(&line, &len, fptr) != -1)) {
+    printf("%s", line);
+}
+
+// Close a file
+fclose(fptr);
+```
 
 ### Loops
 ```C
@@ -150,6 +191,9 @@ void main(){
    // Check if two strings are equal
    if(!strcmp(str1, str2));
 
+   // Remove a charset from a string
+   myString[strcspn(myString, "0123456789")] = 0;
+
    // Slice portion of a string
    char* sliced = malloc(chars_number);
    strncpy(sliced, &myString[start_index], chars_number);
@@ -199,45 +243,10 @@ void main(){
 }
 ```
 
-### CLI Arguments
-```C
-#include <stdio.h>
-#include <string.h>
-
-// Argument style: ./binary --arg1 value1 --arg2 value2
-// "argc" stores the number of arguments, print usage if it's less than the number of required arguments + 1
-// Iterate over the arguments array "argv", store each value in the corresponding string
-int main(int argc, char** argv){
-    if(argc < 2) printf("Usage: %s --arg1 val1", argv[0]);
-    for(int i = 1; i < argc - 1; i++){
-        if(!strcmp("--arg1", argv[i]) && !strpbrk(argv[i+1], "--")) printf("%s", argv[i+1]);
-        if(!strcmp("--arg2", argv[i]) && !strpbrk(argv[i+1], "--")) printf("%s", argv[i+1]);
-    }
-    return 0;
-}
-```
-### File Handling
-File can be handled in C using the `FILE` pointer handler
-```C
-// Open/Create a local File
-FILE* fptr = fopen("path/to/file.txt", "a+");
-
-// Write to file
-fprintf(fptr, "Some text");
-
-// Read file line-by-line
-char* line = NULL;
-size_t len = 0;
-while((getline(&line, &len, fptr) != -1)) {
-    printf("%s", line);
-}
-
-// Close a file
-fclose(fptr);
-```
+## Data Structures
 
 ### Structs
-Structs can be used to build complex data structures, like heaps, trees, lists, queues, stacks, graphs, tries
+Structs are foundational objects to build all data structures: heaps, trees, lists, queues, stacks, graphs, tries
 ```C
 // Declaration
 typedef struct _mystruct {
