@@ -1,22 +1,34 @@
 ## C Basics
-### Variables & Pointers
+### Variables
 ```C
 // Macro variables - aliases for constant values
 #define MACRO_SIZE 50
 #define PI 3.14159
 #define MY_FILE "test.txt"
 
-// Global variables - Accessible everywhere in the current file, stored on heap
+// Global variables - Accessible everywhere in the current file, stored on heap, static is recommended
 static double pi = 3.14;
 static int x = 5;
 
-int main(){
+int main(int argc, char** argv){
     // Variables inside functions are local, stored on stack
     // Native Types
-    char a = 'a';       // 1 Byte    %c  (They map to integers from 0 to 256 - ASCII Table)
+    char a = 'a';       // 1 Byte    %c - They map to integers from 0 to 256 - ASCII Hex Table
     int c = 0;          // 4 Bytes   %d
     double pi = 3.14;   // 8 Bytes   %f
-    size_t x = 40;      // 8 Bytes   %zu (Used for allocation sizes and array indexes)
+
+    // Sizes
+    size_t x = 40;                    // 8 Bytes   %zu - Used for allocation sizes and array indexes
+    printf("%zu", sizeof(var_here));  // "sizeof()" is used to compute the size of an object
+
+    // Pointers
+    int* p = NULL;   // Integer Pointer is initialized to NULL
+
+    *p = 0;          // Pointer holds the value "0"
+    p = &x;          // Pointer points to the address of "x"
+
+    p++              // Pointer is first considered, then incremented by 1
+    ++p              // Pointer is first incremented by 1, then considered
 
     // "unsigned" modifier - shifts a variable to positive-only values
     unsigned int x = 5;          // 4 Bytes   %ud
@@ -29,14 +41,14 @@ int main(){
     // "const" modifier - makes a variable read-only
     const double multiply = 1.51;
 
-    // Pointers - memory addresses of variables, global and stored on heap
-    int* p = NULL;   // Integer Pointer is initialized to NULL
+    // Type casting - change variable type at runtime
+    double frac = (double)1/2;  // Produces 0.5 instead of 0
 
-    *p = 0;          // Pointer holds the value "0"
-    p = &x;          // Pointer points to the address of "x"
-
-    p++              // Pointer is first considered, then incremented by 1
-    ++p              // Pointer is first incremented by 1, then considered
+   // CLI Arguments
+   if(argc < 2) printf("Usage: %s --arg1 \"val1\n", argv[0]);     // "argc" stores the number of arguments, print usage if it's less than the number of required arguments + 1
+   for (int i = 1; i < argc - 1; ++i) {                           // Iterate over the argument array "argv", store each value in a variable with the correct type
+       if(!strcmp(argv[i], "--arg1")) [VAR_TYPE] val1 = argv[i];
+   }
 }
 ```
 
@@ -61,6 +73,7 @@ char chache[26] = {0};
 
 // Dynamic arrays - Variable size - On Heap
 int* arr = malloc([INIT_SIZE] * sizeof(*arr));        // Initial Allocation
+if(!arr) return -1;                                   // Check if the allocation was successful
 int* arr = realloc(arr, [NEW_SIZE] * sizeof(*arr));   // Re-Allocation to extend space forward
 free(arr)                                             // Free after usage is completed
 ```
@@ -89,7 +102,7 @@ if(condition){
 } else {
 }
 
-// Switch (When checking a single variable for more values)
+// Switch - When checking a single variable for more values
 switch(variable){
   case value_1:
   case value_2:
@@ -112,7 +125,7 @@ void main(){
 
     // Dynamic, On Heap
     size_t len = get_length();
-    char* dynamic = malloc(len);
+    char* dynamic = malloc(len * sizeof(*dynamic));
 
     for(size_t i = 0; i < len; i++){
         dynamic[i] = 'b';
@@ -207,14 +220,14 @@ typedef struct _mystruct {
 } mystruct, *p_mystruct;
 
 // Accessing an element of a struct
-mystruct str = { 0 };
-str.ID = 15;
-str.age = 77;
+mystruct x = { 0 };
+x.ID = 15;
+x.age = 77;
 
 // Accessing an element of a struct pointer
-p_mystruct p_struct = NULL;
-p_struct -> ID = 66;
-p_struct -> age = 62;
+p_mystruct x = malloc(sizeof(p_mystruct));
+x -> ID = 66;
+x -> age = 62;
 ```
 
 ## Algorithms
