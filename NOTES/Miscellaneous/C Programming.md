@@ -46,8 +46,8 @@ int main(int argc, char** argv){
 
    // CLI Arguments
    if(argc < 2) printf("Usage: %s --arg1 \"val1\n", argv[0]);     // "argc" stores the number of arguments, print usage if it's less than the number of required arguments + 1
-   for (int i = 1; i < argc - 1; ++i) {                           // Iterate over the argument array "argv", store each value in a variable with the correct type
-       if(!strcmp(argv[i], "--arg1")) [VAR_TYPE] val1 = argv[i];
+   for (int i = 1; i < argc - 1; ++i) {                           // Iterate over the argument array "argv", store each value in a corresponding string
+       if(!strcmp(argv[i], "--arg1")) char* value1 = argv[i+1];
    }
 }
 ```
