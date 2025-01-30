@@ -15,7 +15,7 @@ int main(int argc, char** argv){
     // Native Types
     char a = 'a';       // 1 Byte    %c - They map to integers from 0 to 256 - ASCII Hex Table
     int c = 0;          // 4 Bytes   %d
-    double pi = 3.14;   // 8 Bytes   %f
+    double pi = 3.14;   // 8 Bytes   %lf
 
     // Sizes
     size_t x = 40;                    // 8 Bytes   %zu - Used for allocation sizes and array indexes
@@ -43,6 +43,15 @@ int main(int argc, char** argv){
 
     // Type casting - Change variable type at runtime
     double frac = (double)1/2;  // Produces 0.5 instead of 0
+
+    // User Input
+    double a;                                          // Numbers
+    if(!scanf("%lf",&a)) return -1;
+
+    char input[257];                                   // Strings 
+    if(!fgets(buf, sizeof(buf), stdin)) return -1;
+    if(strlen(input) >= sizeof(input) - 1) return -1;
+    input[strcspn(input, "\r\n")] = 0;                 // Strip "\r" and "\n" bytes
 }
 ```
 
