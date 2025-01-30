@@ -41,14 +41,8 @@ int main(int argc, char** argv){
     // "const" modifier - makes a variable read-only
     const double multiply = 1.51;
 
-    // Type casting - change variable type at runtime
+    // Type casting - Change variable type at runtime
     double frac = (double)1/2;  // Produces 0.5 instead of 0
-
-   // CLI Arguments
-   if(argc < 2) printf("Usage: %s --arg1 \"val1\n", argv[0]);     // "argc" stores the number of arguments, print usage if it's less than the number of required arguments + 1
-   for (int i = 1; i < argc - 1; ++i) {                           // Iterate over the argument array "argv", store each value in a corresponding string
-       if(!strcmp(argv[i], "--arg1")) char* value1 = argv[i+1];
-   }
 }
 ```
 
@@ -188,6 +182,24 @@ void main(){
   for(char* substr = strtok(strdup(format), "_"); substr; substr=strtok(NULL, "_")){
     printf("%s\n", substr);
   }
+}
+```
+
+### CLI Arguments
+```C
+#include <stdio.h>
+#include <string.h>
+
+// Argument style: ./binary --arg1 value1 --arg2 value2
+// "argc" stores the number of arguments, print usage if it's less than the number of required arguments + 1
+// Iterate over the arguments array "argv", store each value in the corresponding string
+int main(int argc, char** argv){
+    if(argc < 2) printf("Usage: %s --arg1 val1", argv[0]);
+    for(int i = 1; i < argc - 1; i++){
+        if(!strcmp("--arg1", argv[i]) && !strpbrk(argv[i+1], "--")) printf("%s", argv[i+1]);
+        if(!strcmp("--arg2", argv[i]) && !strpbrk(argv[i+1], "--")) printf("%s", argv[i+1]);
+    }
+    return 0;
 }
 ```
 ### File Handling
