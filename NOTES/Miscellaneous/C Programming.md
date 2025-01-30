@@ -347,7 +347,7 @@ INCLUDE_FLAGS := -I ./include
 
 # C99 Standard Flags
 CC= gcc
-STDFLAGS := -Wall -Wextra -Wpedantic -Wformat -Wformat-security -Werror -std=c99 -fsanitize=leak
+STDFLAGS := -Wall -Wextra -Wpedantic -Wformat -Wformat-security -Werror -std=c99 -fsanitize=leak -fwrapv -fsanitize=address
 
 #GCC Extra Flags (Profiling / Optimizations / Security)
 #DBGLAGS := -pg -Og
