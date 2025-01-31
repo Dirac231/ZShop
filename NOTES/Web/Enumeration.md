@@ -65,7 +65,9 @@
         *   `paramscan() [URL/BACKEND_FILE]`
         *   `headscan()  [ROOT_URL] [METHOD]`
         *   Burpsuite → Param Miner
-    *   Request Fuzzing
-        *   `Copy-As-FFUF` BurpSuite Extension → Manual FFUF Request Payloads
-        *   `paramfuzz() [QUERY_STRING]`
-        *   Verbose Errors / Input Reflection / Header Parsing / Blind Payloads (Log4J)
+*   Fuzzing
+    *   BurpSuite Extension → “Copy as FFUF”
+    *   Nuclei GET  → `paramfuzz() [QUERY_STRING]`
+    *   FFUF GET    → `ffuf -u [QUERY_URL] -w [WORDLIST]`
+    *   FFUF POST → `ffuf -u [POST_URL] -d [PAYLOAD] -H "Content-Type: [TYPE]"` → URLEncoded / JSON / XML 
+    *   Verbose Errors / Input Reflection / Header Validation / Blind Payloads (Log4J)

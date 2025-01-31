@@ -1,4 +1,16 @@
 # Service Hacking
+*   Sensitive Files
+    *   Credentials / Usernames / Hostnames / Endpoints / Connection Strings / Hashes & Encoded Values
+    *   Cracking            → John + `*2john` Scripts
+    *   Metadata           → `file [FILE]` / `exiftool [FILE]` → Documents / Media Content / Archives
+    *   PCAP                   → Wireshark Analysis
+    *   Binaries              → `binwalk` / `strings` / Ghidra / Disassembling
+    *   APK / JAR           → `unzip` / JADX / Code Analysis / [APKLeaks](https://github.com/dwisiswant0/apkleaks)
+    *   KeePass              → `kpcli --kdb [KBDX_FILE]` / [Dump Password Recovery](https://0xdf.gitlab.io/2024/02/10/htb-keeper.html#)
+    *   PuTTY SSH         → `puttygen [PUTTY.KEY] -O private-openssh -o [OUT_SSH_KEY]` → SSH Key Login
+    *   Word / Excel      → `olevba [FILE]`
+    *   SQLITE                → `sqlite3 [FILE]` → `.tables` → `.schema [TABLE]` → `select * from [TABLE]`
+    *   XSLX                    → `unzip` / OpenOffice
 *   Host Discovery
     *   `alive() [IP_FILE/CIDR]`
     *   ICMP Polling
@@ -135,21 +147,3 @@
         *   SMB PTH / NTLM Poisoning   → Also Without AD
         *   MSSQL LLMNR                           → Also Without AD
         *   AD Enumeration / Attacks
-*   Sensitive Files
-    *   Credentials / Usernames / Hostnames / Endpoints / Connection Strings / Hashes & Encoded Values
-    *   Cracking            → John + `*2john` Scripts
-    *   Metadata           → `file [FILE]` / `exiftool [FILE]` → Documents / Media Content / Archives
-    *   PCAP                   → Wireshark Analysis
-    *   Binaries              → `binwalk` / `strings` / Ghidra / Disassembling
-    *   APK / JAR           → `unzip` / JADX / Code Analysis / [APKLeaks](https://github.com/dwisiswant0/apkleaks)
-    *   KeePass              → `kpcli --kdb [KBDX_FILE]` / [Dump Password Recovery](https://0xdf.gitlab.io/2024/02/10/htb-keeper.html#)
-    *   PuTTY SSH         → `puttygen [PUTTY.KEY] -O private-openssh -o [OUT_SSH_KEY]` → SSH Key Login
-    *   Word / Excel      → `olevba [FILE]`
-    *   SQLITE                → `sqlite3 [FILE]` → `.tables` → `.schema [TABLE]` → `select * from [TABLE]`
-    *   XSLX                    → `unzip` / OpenOffice
-*   Hashed / Encoded Strings
-    *   Identification                → `hashid [HASH]` / `hashcat --identify [HASH]` / [Weakpass](https://weakpass.com/tools/lookup) / [Crackstation](https://crackstation.net/) 
-    *   [Hashcat Cracking](https://github.com/unstable-deadlock/brashendeavours.gitbook.io/blob/master/pentesting-cheatsheets/hashcat-hash-modes.md)      → `hashcat -m [MODE] -a 0 [ROCKYOU/WEAKPASS] -r [HASHCAT_RULE] --force [HASH.hashcat]` + [Rules Usage](https://github.com/NotSoSecure/password_cracking_rules)
-    *   John Cracking              → `john --fork=15 --wordlist=[ROCKYOU/WEAKPASS] --rules=[HASHCAT_RULE] --format=[FORMAT] [HASH.john]`
-    *   Incomplete Length     → Alphanumeric Bruteforce Characters
-    *   Encoded Values           → [CyberChef](https://gchq.github.io/CyberChef/) + Output Suggestion / `echo -n` + `tr -d '\n'` for CLI Encodings
