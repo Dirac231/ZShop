@@ -1322,7 +1322,10 @@ dirfuzz(){
     fi
 
     echo -e "\nCOMMON EXTENSION FUZZING\n"
-    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -e xml,json,html,js,php,cgi,asp,aspx,txt,jsp,bak,old,jsp,rb,pl
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -e xml,json,html,js,php,cgi,asp,aspx,txt,jsp,bak,old,jsp
+
+    echo -e "\nGENERIC EXTENSION FUZZING\n"
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ1.FUZZ2 -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt:FUZZ1 -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt:FUZZ2
 }
 
 bckfile(){
