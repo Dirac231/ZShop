@@ -47,7 +47,7 @@
     *   Directories & Files
         *   `dirfuzz() [URL/PATH]`      → Recursive / Nested / 30X & 40X Endpoints / Crawled URLs
         *   `apifuzz() [URL]`                → REST / GraphQL Endpoints / ExpressJS URLs
-        *   Wordlist Selection             → `urlgen() [URL]` / GitHub Paths / Seclists Content / [Assetnote](https://wordlists.assetnote.io/) / [Wordlistgen](https://github.com/ameenmaali/wordlistgen) + [WayMore](https://github.com/xnl-h4ck3r/waymore)
+        *   Wordlist Selection             → GitHub Paths / Seclists Web-Content / [Assetnote](https://wordlists.assetnote.io/) / [Wordlistgen](https://github.com/ameenmaali/wordlistgen) + [WayMore](https://github.com/xnl-h4ck3r/waymore)
         *   [Dependency Confusion](https://github.com/visma-prodsec/confused) → `pom.xml` / `installed.json` / `composer.json` / `package.json` / `requirements.txt`
         *   Verbose Errors                     → 404 Pages / Stack Traces
         *   GIT Endpoints
@@ -55,9 +55,8 @@
             *   `git log` / `git show [HASH]` / `git diff [HASH_1] [HASH_2]` / `git checkout [BRANCH / .]`
             *   Privesc Sections Checks → Credential Hunting (Web Applications)
         *   Backup Files
-            *   Backend Files / 403 / Inferred / Sensitive Readable Files / Configuration
             *   `bckfile() [URL]/[FILE]`
-            *   `ffuf -u [URL]/FUZZ -x [BACKEND_EXT].[BACKUP_EXT] -w [COMMON/DIRB/SHORT]`
+            *   Backend Files / 403 Files / Inferred / Sensitive Protected Files
     *   Virtual Hosts
         *   Domains                            → Associated with Web Applications (TLS / URLs)
         *   `addhost() [IP] [HOST]`
