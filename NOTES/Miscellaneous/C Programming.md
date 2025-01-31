@@ -324,7 +324,7 @@ uint32_t HASH_SZ = [SOME_SIZE_HERE];
 [TYPE]* cache_space = mmap(NULL, HASH_SZ, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 [TYPE]* cache = &cache_space[STARTING_INDEX];
 
-// Hashing strings - No Collisions Assumed (<sys/mman.h> + "murmurhash.h")
+// Hashing strings - No Collision Handling (<sys/mman.h> + "murmurhash.h")
 uint32_t hash(char* input){
     uint32_t seed = 1406483717;
     uint32_t hash_val = murmurhash(input, (uint32_t)strlen(input), seed);
