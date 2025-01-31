@@ -1317,7 +1317,7 @@ dirfuzz(){
     fi
 
     echo -e "\nEXTENSION FILE FUZZING\n"
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -e xml,json,log,php,asp,aspx,txt,jsp,bak,old,tmp
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -e xml,json,html,js,php,cgi,asp,aspx,txt,jsp,bak,old,jsp,rb,pl
 }
 
 bckfile(){
