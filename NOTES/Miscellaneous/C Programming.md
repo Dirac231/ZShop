@@ -80,7 +80,7 @@ void sum_p(int* x, int* y, int* result){
 int main(){
     // Numbers
     double a;                                         
-    if(!scanf("%lf",&a)) return -1; // Read Check
+    if(!scanf("%lf",&a)) return -1;                    // Read Check
 
     // Strings - 
     char input[257];                                   
