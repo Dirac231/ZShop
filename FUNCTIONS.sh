@@ -1286,24 +1286,24 @@ addhost() {
 # Content Discovery --> (Directories, Files, Backups)
 dirfuzz(){    
     echo -e "\nSEARCHING COMMON CONTENT\n"
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/dirsearch.txt -v
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w ~/WORDLISTS/dirb_vulns.txt
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/dirsearch.txt -v
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w ~/WORDLISTS/dirb_vulns.txt
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
 
     echo -e "\nCHECKING NUCLEI HTTP EXPOSURES\n"    
     nuclei -up &>/dev/null && nuclei -ut &>/dev/null
     nuclei -rl 20 -c 5 -u $1 -t http/exposures
 
     echo -e "\nSEARCHING RAFT DIRECTORIES\n"
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
 
     echo -e "\nSEARCHING RAFT FILES\n"
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
 
     echo -e "\nFULL DIRECTORY SEARCH\n"
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
 
     read -r cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (DEFAULT -> \"$1\"): "
     if [[ -z $cel ]]; then
@@ -1312,12 +1312,17 @@ dirfuzz(){
     if [[ ! -z $cel ]]; then
         echo -e "\nGENERATED FUZZING\n"
         cewl $cel -d 4 -m 3 --lowercase --with-numbers --convert-umlauts -w /tmp/$(echo $1 | unfurl format %d).txt
-        ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
+        ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
         rm /tmp/$(echo $1 | unfurl format %d).txt
     fi
 
-    echo -e "\nEXTENSION FILE FUZZING\n"
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -e xml,json,html,js,php,cgi,asp,aspx,txt,jsp,bak,old,jsp,rb,pl
+    read -r file\?"INPUT A BACKEND FILENAME FOR SUPPORTED EXTENSION TESTING (BLANK TO SKIP)?: "
+    if [[ $file =~ [yY] ]]; then
+        ffuf -t 10 -ac -acs advanced -u $1/${file}FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-extensions-lowercase.txt
+    fi
+
+    echo -e "\nCOMMON EXTENSION FUZZING\n"
+    ffuf -t 10 -ac -acs advanced -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -e xml,json,html,js,php,cgi,asp,aspx,txt,jsp,bak,old,jsp,rb,pl
 }
 
 bckfile(){
