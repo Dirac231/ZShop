@@ -284,7 +284,32 @@ int compare_len(const void* a, const void* b){
     return strcmp(*(const char**)a, *(const char**)b); 
 }
 qsort(str_array, length, sizeof(char*), compare_len);
+```
 
+### Binary Search
+In a sorted array, it's possible to perform a search in `O(nlogn)` time by using binary search, adjust comparisons and left/right element accordingly depending on the array type
+```C
+int binarySearch(int nums[], int target, int left, int right) {
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        // Check if the target is present at mid
+        if (nums[mid] == target) {
+            return mid;
+        }
+        // If target is greater, ignore the left half
+        else if (nums[mid] < target) {
+            left = mid + 1;
+        }
+        // If target is smaller, ignore the right half
+        else {
+            right = mid - 1;
+        }
+    }
+
+    // Target is not present in the array
+    return -1;
+}
 ```
 
 ### Hash Lookups
