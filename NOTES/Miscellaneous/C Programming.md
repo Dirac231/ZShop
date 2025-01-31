@@ -55,8 +55,7 @@ int main(){
 
     // Dynamic arrays - Variable size - On Heap
     int* arr = malloc([INIT_SIZE] * sizeof(*arr));        // Initial Allocation
-    if(!arr) return -1;                                   // Check if the allocation was successful
-    int* arr = realloc(arr, [NEW_SIZE] * sizeof(*arr));   // Re-Allocation to extend space forward
+    int* arr = realloc(arr, [NEW_SIZE] * sizeof(*arr));   // Re-Allocation to extend space forward, try to avoid if possible by choosing a better initial allocation
     free(arr)                                             // Free after usage is completed
 }
 ```
@@ -173,9 +172,9 @@ void main(){
     }
 
     // Dynamic, On Heap
-    size_t len = get_length();
-    char* dynamic = malloc(len * sizeof(*dynamic));
+    char* dynamic = malloc(INIT_LENGTH * sizeof(*dynamic));
 
+    size_t len = get_length();
     for(size_t i = 0; i < len; i++){
         dynamic[i] = 'b';
     }
