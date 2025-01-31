@@ -1288,12 +1288,13 @@ dirfuzz(){
     echo -e "\nSEARCHING COMMON CONTENT\n"
     ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
     ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/dirsearch.txt -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w ~/WORDLISTS/dirb_vulns.txt
     ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
     ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
 
     echo -e "\nCHECKING NUCLEI HTTP EXPOSURES\n"    
     nuclei -up &>/dev/null && nuclei -ut &>/dev/null
-    nuclei -rl 15 -c 5 -u $1 -t http/exposures
+    nuclei -rl 20 -c 5 -u $1 -t http/exposures
 
     echo -e "\nSEARCHING RAFT DIRECTORIES\n"
     ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
@@ -1302,20 +1303,21 @@ dirfuzz(){
     ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
 
     echo -e "\nFULL DIRECTORY SEARCH\n"
-    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-big.txt  -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt  -v
 
-    read -r cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (Current -> \"$1\"): "
+    read -r cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (DEFAULT -> \"$1\"): "
+    if [[ -z $cel ]]; then
+        cel=$1
+    fi
     if [[ ! -z $cel ]]; then
         echo -e "\nGENERATED FUZZING\n"
         cewl $cel -d 4 -m 3 --lowercase --with-numbers --convert-umlauts -w /tmp/$(echo $1 | unfurl format %d).txt
-        ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
+        ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
         rm /tmp/$(echo $1 | unfurl format %d).txt
     fi
 
-    read -r resp\?"INPUT EXTENSION FOR BACKEND & BACKUP FUZZING: "
-    if [[ ! -z $resp ]]; then
-        ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -e $resp,$resp.old,$resp.bak,$resp.tmp,$resp~,old,bak,tmp -v
-    fi
+    echo -e "\nEXTENSION FILE FUZZING\n"
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words.txt -e xml,json,log,php,asp,aspx,txt,jsp,bak,old,tmp
 }
 
 bckfile(){
@@ -1335,7 +1337,7 @@ apifuzz(){
 # GET Parameter fuzzing
 paramfuzz(){
     nuclei -up &> /dev/null && nuclei -ut &> /dev/null
-    nuclei -rl 15 -c 5 -u $1 -dast -headless -t dast/ 
+    nuclei -rl 20 -c 5 -u $1 -dast -headless -t dast/ 
 }
 
 # GET/POST/Header discovery
@@ -1439,7 +1441,7 @@ wordscan(){
 
     echo -e "\nSCANNING FOR ALL VULNERABLE COMPONENTS\n"
     nuclei -ut &> /dev/null && nuclei -up &> /dev/null
-    nuclei -rl 15 -c 5 -u $1 -t github/topscoder/nuclei-wordfence-cve -tags wp-core,wp-plugin,wp-themes -es info
+    nuclei -rl 20 -c 5 -u $1 -t github/topscoder/nuclei-wordfence-cve -tags wp-core,wp-plugin,wp-themes  -es info
 
     echo -e "\nSEARCHING WP-CONFIG BACKUP EXPOSURES\n"
     ~/TOOLS/bfac/bfac -u $1/wp-config --threads 3 --level 4 | grep "Response-Code: 200"
@@ -1695,7 +1697,7 @@ subperm(){
 takeover(){
     echo -e "\nTESTING NUCLEI TAKEOVERS\n"
     nuclei -up >/dev/null && nuclei -ut >/dev/null
-    nuclei -rl 15 -c 5 -l $1 -t http/takeovers 
+    nuclei -rl 20 -c 5 -l $1 -t http/takeovers 
 
     echo -e "\nTESTING DNS TAKEOVERS\n"
     sudo service docker start
