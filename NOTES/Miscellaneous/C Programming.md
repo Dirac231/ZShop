@@ -210,7 +210,7 @@ void main(){
    // Concatenate N chars of string B with string A
    char* A = "hello";
    char* B = " world";
-   strncat(a, b, N);
+   char* out = strncat(A, B, N);
 
    // Convert digit string to integer
    const char* test = "1234";
