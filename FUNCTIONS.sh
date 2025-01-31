@@ -364,8 +364,8 @@ scan(){
                     fi
 
                     echo -e "\nREQUESTING \"NS\" RECORDS FOR \"$dnsdom\"\n"
-                    ns_records=$(dig ns $dnsdom @$2 -p $3 +short) && echo $ns_records
-                    ref_chk=$(dig ns $dnsdom @$2 -p $3 | grep REFUSED)
+                    ns_records=$(dig ns $dnsdom @$2 -p $3 +short | grep -v "timed out") && echo $ns_records
+                    ref_chk=$(dig ns $dnsdom @$2 -p $3 | grep REFUSED | grep -v "timed out")
 
                     if [[ ! -z $ref_chk || -z $ns_records ]]; then
                         echo -e "\nREQUESTING \"A / AAAA\" RECORDS FOR \"$dnsdom\" OVER DNS IP\n"
@@ -426,7 +426,7 @@ scan(){
 
                         echo -e "\nATTEMPTING ZONE TRANSFER OVER ALL ZONES\n"
                         while read zone; do
-                            axfr_resp=$(dig axfr $dnsdom @$zone -p $3 | grep $dnsdom --color=never | tail -n +2)
+                            axfr_resp=$(dig axfr $dnsdom @$zone -p $3 | grep $dnsdom --color=never | tail -n +2 | grep -v "timed out")
                             if [[ ! -z $axfr_resp ]]; then
                                 echo $axfr_resp
                                 break
@@ -1286,35 +1286,35 @@ addhost() {
 # Content Discovery --> (Directories, Files, Backups)
 dirfuzz(){    
     echo -e "\nSEARCHING COMMON CONTENT\n"
-    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
-    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/dirsearch.txt -v
-    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
-    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/quickhits.txt -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/dirsearch.txt -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/big.txt -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all.txt -v
 
     echo -e "\nCHECKING NUCLEI HTTP EXPOSURES\n"    
     nuclei -up &>/dev/null && nuclei -ut &>/dev/null
-    nuclei -u $1 -t http/exposures
+    nuclei -rl 15 -c 5 -u $1 -t http/exposures
 
     echo -e "\nSEARCHING RAFT DIRECTORIES\n"
-    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-directories.txt -v
 
     echo -e "\nSEARCHING RAFT FILES\n"
-    ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-large-files.txt -v
 
     echo -e "\nFULL DIRECTORY SEARCH\n"
-    ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-big.txt  -v
+    ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-big.txt  -v
 
     read -r cel\?"INPUT ENDPOINT FOR GENERATED FUZZING IF NEEDED (Current -> \"$1\"): "
     if [[ ! -z $cel ]]; then
         echo -e "\nGENERATED FUZZING\n"
         cewl $cel -d 4 -m 3 --lowercase --with-numbers --convert-umlauts -w /tmp/$(echo $1 | unfurl format %d).txt
-        ffuf -ac -acs advanced -r  -u $1/FUZZ/ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
+        ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ/ -c -w /tmp/$(echo $1 | unfurl format %d).txt -v 
         rm /tmp/$(echo $1 | unfurl format %d).txt
     fi
 
     read -r resp\?"INPUT EXTENSION FOR BACKEND & BACKUP FUZZING: "
     if [[ ! -z $resp ]]; then
-        ffuf -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -e $resp,$resp.old,$resp.bak,$resp.tmp,$resp~,old,bak,tmp -v
+        ffuf -t 10 -ac -acs advanced -r  -u $1/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -e $resp,$resp.old,$resp.bak,$resp.tmp,$resp~,old,bak,tmp -v
     fi
 }
 
@@ -1335,7 +1335,7 @@ apifuzz(){
 # GET Parameter fuzzing
 paramfuzz(){
     nuclei -up &> /dev/null && nuclei -ut &> /dev/null
-    nuclei -u $1 -dast -headless -t dast/ -rl 25 -c 5
+    nuclei -rl 15 -c 5 -u $1 -dast -headless -t dast/ 
 }
 
 # GET/POST/Header discovery
@@ -1366,7 +1366,10 @@ bypass(){
 # Host Reflections / Misroutings
 vhost(){
     echo -e "\nCHECKING HOST MISROUTING (TOP-110000)\n"
-    ffuf -mc all -ac -acs advanced -u $1 -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -H "Host: FUZZ.$(echo $1 | unfurl format %d)"
+    ffuf -t 10 -mc all -ac -acs advanced -u $1 -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -H "Host: FUZZ.$(echo $1 | unfurl format %d)"
+
+    echo -e "\nCHECKING DIRECT WEB SUBDOMAINS\n"
+    ffuf -t 10 -mc all -ac -acs advanced -u $(echo $1 | unfurl format %s)://FUZZ.$(echo $1 | unfurl format %d) -c -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt
 }
 
 # Insecure GUID version check
@@ -1436,7 +1439,7 @@ wordscan(){
 
     echo -e "\nSCANNING FOR ALL VULNERABLE COMPONENTS\n"
     nuclei -ut &> /dev/null && nuclei -up &> /dev/null
-    nuclei -u $1 -t github/topscoder/nuclei-wordfence-cve -tags wp-core,wp-plugin,wp-themes -rl 25 -c 5 -es info
+    nuclei -rl 15 -c 5 -u $1 -t github/topscoder/nuclei-wordfence-cve -tags wp-core,wp-plugin,wp-themes -es info
 
     echo -e "\nSEARCHING WP-CONFIG BACKUP EXPOSURES\n"
     ~/TOOLS/bfac/bfac -u $1/wp-config --threads 3 --level 4 | grep "Response-Code: 200"
@@ -1544,7 +1547,7 @@ paramine(){
 
     echo -e "\nFUZZING PARAMETERS\n"
     nuclei -up &> /dev/null && nuclei -ut &> /dev/null
-    nuclei -ss host-spray -l $(echo $1 | unfurl format %d)_params.txt -dast -headless -t dast/ -rl 25 -c 5 -v
+    nuclei -ss host-spray -l $(echo $1 | unfurl format %d)_params.txt -dast -headless -t dast/  -v
 }
 
 # Google fingerprinting for a root domain
@@ -1676,7 +1679,7 @@ subbrute(){
     wget https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -O ~/WORDLISTS/public_resolvers.txt
 
     echo -e "BRUTEFORCING DNS NAMES\n"
-    puredns bruteforce -r ~/WORDLISTS/public_resolvers.txt ~/WORDLISTS/subdomains.txt $1 --write bruteforce_resolved.txt 
+    puredns bruteforce -r ~/WORDLISTS/public_resolvers.txt ~/WORDLISTS/subdomains.txt $1 --threads 10 --write bruteforce_resolved.txt 
 }
 
 # DNS Permuation function
@@ -1692,7 +1695,7 @@ subperm(){
 takeover(){
     echo -e "\nTESTING NUCLEI TAKEOVERS\n"
     nuclei -up >/dev/null && nuclei -ut >/dev/null
-    nuclei -l $1 -t http/takeovers -rl 25 -c 5
+    nuclei -rl 15 -c 5 -l $1 -t http/takeovers 
 
     echo -e "\nTESTING DNS TAKEOVERS\n"
     sudo service docker start
