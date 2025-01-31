@@ -267,7 +267,7 @@ x -> age = 62;
 
 ## Algorithms
  
-### Sorting
+### Array Sorting
 
 Sorting integers/strings arrays in C is done using `qsort()`, with `O(n*log(n))` average time complexity, this is the fastest algorithm in practice for most real-world data, and it contains numerous optimization that makes it faster than most manual implementations
 ```C
