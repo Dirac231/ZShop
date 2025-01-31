@@ -10,7 +10,7 @@
     *   Subdomains
         *   Passive Source
             *   `subfind()  [ROOT DOMAIN]`
-            *   API Data Settings → `amass enum -list` + `~/.config/subfinder/config.yml` File
+            *   API Data Settings → `amass enum -list` + Subfinder Provider Config File
         *   Bruteforcing / Resolving
             *   `subbrute() [ROOT DOMAIN]`
             *   `subperm()  [SUBDOMAINS_FILE]`
@@ -18,13 +18,11 @@
         *   Web Crawling
             *   `crawl() [WEB_APP_URL]` → CLI Domain Filtering
             *   Burp Sitemap Filtering → Recursively on Links
-        *   Cloud Ranges
-            *   [Fetch TXT Files](https://kaeferjaeger.gay/?dir=sni-ip-ranges)
-            *   `cat [FILE.txt] | grep -F ".apple.com" | awk -F'-- ' '{print $2}'| tr ' ' '\n' | tr '[' ' ' | sed 's/ //' | sed 's/\]//' | grep -F ".apple.com" | sort -u`
 *   Network
     *   Enumeration
         *   [BGP](https://bgp.he.net/)/ [RIPE](https://apps.db.ripe.net/db-web-ui/query?searchtext=)
-        *   `asn() [ORGANIZATION]`
+        *   `asn()     [ORGANIZATION]`
+        *   `alive()   [CIDR/IP_LIST]`
     *   Shodan Fingerprinting
         *   `shodscan()    [ASN/CIDR/IP_LIST]`
         *   `hackstat()    [SSL/ORG/NET/ASN_SHODAN_QUERY]`
@@ -32,7 +30,6 @@
         *   [Queries](https://github.com/jakejarvis/awesome-shodan-queries) & [Filters](https://www.shodan.io/search/filters) & [Services](https://github.com/random-robbie/My-Shodan-Scripts) / [Exploit Queries](https://github.com/HernanRodriguez1/Dorks-Shodan-2023)
         *   [ZoomEye](https://www.zoomeye.hk/) / [Censys](https://search.censys.io/)
     *   Active Fingerprinting
-        *   `alive()       [CIDR/IP_LIST]`
         *   `fingerprint() [CIDR/IP_LIST]`
 *   Web 
     *   Fingerprinting
