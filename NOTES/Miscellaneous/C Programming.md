@@ -22,6 +22,15 @@ int main(int argc, char** argv){
     size_t x = 40;                    // 8 Bytes   %zu - Used for allocation sizes and array indexes
     printf("%zu", sizeof(var_here));  // "sizeof()" is used to compute the size of an object
 
+    // Pointers
+    int* p = NULL;   // Integer Pointer is initialized to NULL
+
+    *p = 0;          // Pointer holds the value "0"
+    p = &x;          // Pointer points to the address of "x"
+
+    p++              // Pointer is first considered, then incremented by 1
+    ++p              // Pointer is first incremented by 1, then considered
+
     // "unsigned" modifier - shifts a variable to positive-only values
     unsigned int x = 5;          // 4 Bytes   %ud
     unsigned double pi = 3.14;   // 8 Bytes   %ug
@@ -38,18 +47,9 @@ int main(int argc, char** argv){
 }
 ```
 
-### Pointers & Arrays
+### Arrays
 ```C
 int main(){
-    // Pointers
-    int* p = NULL;   // Integer Pointer is initialized to NULL
-
-    *p = 0;          // Pointer holds the value "0"
-    p = &x;          // Pointer points to the address of "x"
-
-    p++              // Pointer is first considered, then incremented by 1
-    ++p              // Pointer is first incremented by 1, then considered
-
     // Static arrays - Constant size - On Stack
     char chache[26] = {0};
 
@@ -243,23 +243,22 @@ void main(){
 ```
 
 ## Data Structures
-
 ### Structs
-Structs are foundational objects to build all data structures: heaps, trees, lists, queues, stacks, graphs, tries
+Structs are foundational objects to build [data structures](https://en.wikipedia.org/wiki/List_of_data_structures): Tuples, Lists, Trees, Heaps, Queues, Stacks, Graphs, Tries
 ```C
 // Declaration
-typedef struct _mystruct {
+typedef struct _myStruct {
     int ID;
     int age;
-} mystruct, *p_mystruct;
+} myStruct, *p_myStruct;
 
-// Accessing an element of a struct
-mystruct x = { 0 };
+// Access a Struct
+myStruct x = { 0 };
 x.ID = 15;
 x.age = 77;
 
-// Accessing an element of a struct pointer
-p_mystruct x = malloc(sizeof(p_mystruct));
+// Access a Struct Pointer
+p_myStruct x = malloc(sizeof(p_myStruct));
 x -> ID = 66;
 x -> age = 62;
 ```
