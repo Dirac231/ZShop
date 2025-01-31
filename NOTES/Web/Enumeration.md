@@ -62,7 +62,10 @@
         *   `addhost() [IP] [HOST]`
         *   `vhost() [DOMAIN_URL]`    → Scan Recursively
     *   Parameters & Headers
-        *   `paramfuzz() [QUERY_STRING]` + Copy-As-FFUF BurpSuite Extension
         *   `paramscan() [URL/BACKEND_FILE]`
         *   `headscan()  [ROOT_URL] [METHOD]`
-        *   Burp Discovery  → Param Miner
+        *   Burpsuite → Param Miner
+    *   Request Fuzzing
+        *   `Copy-As-FFUF` BurpSuite Extension → Manual FFUF Request Payloads
+        *   `paramfuzz() [QUERY_STRING]`
+        *   Verbose Errors / Input Reflection / Header Parsing / Blind Payloads (Log4J)

