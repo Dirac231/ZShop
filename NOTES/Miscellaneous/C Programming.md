@@ -287,7 +287,7 @@ qsort(str_array, length, sizeof(char*), compare_len);
 ```
 
 ### Binary Search
-In a sorted array, it's possible to perform a search in `O(nlogn)` time by using binary search, adjust comparisons and left/right element accordingly depending on the array type
+In a sorted array, it's possible to perform a search in `O(log(n))` time by using binary search, adjust comparisons and left/right element accordingly depending on the array type
 ```C
 int binarySearch(int nums[], int target, int left, int right) {
     while (left <= right) {
@@ -314,7 +314,7 @@ int binarySearch(int nums[], int target, int left, int right) {
 
 ### Hash Lookups
 
-Allows to cache data in an array while iterating over some structure, saving time complexity. Useful to solve unique property lookups, or frequency counting problems, simple examples are shown
+Cache data inside an array while iterating over some structure, saving time complexity. Useful to solve unique property lookups, or frequency counting problems.
 ```C
 // Hashing chars
 [TYPE] cache[256] = { 0 };
