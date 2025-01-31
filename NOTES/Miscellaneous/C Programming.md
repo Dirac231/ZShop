@@ -382,10 +382,10 @@ INCLUDE_FLAGS := -I ./include
 
 # GCC Essential Flags
 CC= gcc
-STDFLAGS := -std=c99 -Wall -Wextra -Wpedantic -Werror -Wmissing-prototypes -Wfloat-equal -Wconversion -fsanitize=address,undefined -Wformat=2 -Wformat-security
+STDFLAGS := -std=c99 -Wall -Wextra -Wpedantic -Werror -Wmissing-prototypes -Wfloat-equal -Wconversion -fsanitize=address,undefined -Wformat=2 -Wformat-security -O2 -g -march=native
 
-# GCC Speed Optimization Flags
-#OPTLAGS := -Ofast -march=native -ffloat-store -fexcess-precision=style -ffast-math -fno-rounding-math -fno-signaling-nans -fcx-limited-range -fno-math-errno -funsafe-math-optimizations -fassociative-math -freciprocal-math -ffinite-math-only -fno-signed-zeros -fno-trapping-math -frounding-math -fsingle-precision-constant
+# GCC Floating Optimization Flags
+#OPTLAGS := -Ofast -ffloat-store -fexcess-precision=style -ffast-math -fno-rounding-math -fno-signaling-nans -fcx-limited-range -fno-math-errno -funsafe-math-optimizations -fassociative-math -freciprocal-math -ffinite-math-only -fno-signed-zeros -fno-trapping-math -frounding-math -fsingle-precision-constant
 
 # GCC Security Flags (FULL RERLO + NX + PIE + CANARY)
 #SECFLAGS := -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,separate-code -fPIE -pie -fstack-protector-strong
